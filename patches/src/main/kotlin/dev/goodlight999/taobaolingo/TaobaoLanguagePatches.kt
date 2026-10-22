@@ -45,6 +45,14 @@ private object ResourceLocaleUpdater : Fingerprint(
     isStatic = false
 )
 
+private object LocalizedStringLookup : Fingerprint(
+    definingClass = LOCALIZATION,
+    name = "q",
+    returnType = "Ljava/lang/String;",
+    parameters = listOf("I"),
+    isStatic = true
+)
+
 private object InternationalFlag : Fingerprint(
     definingClass = LOCALIZATION,
     name = "o",
@@ -125,6 +133,52 @@ val englishUiResourcesPatch = bytecodePatch(
         ResourceLocaleUpdater.method.addInstructions(
             0,
             "sget-object p2, $LANGUAGE->ENGLISH:$LANGUAGE"
+        )
+    }
+}
+
+/**
+ * Localized Resources.getString() for the 909 calls to Localization.q(int).
+ * Creates a separate configuration context rather than modifying shared
+ * Resources or reporting a false locale to the network, edition or login SDKs.
+ *
+ * Uses only three existing local registers in q(int) (5 registers total,
+ * one parameter; v0-v3 are locals in Taobao 10.66.30).
+ * Fails through to the original implementation if the app context is absent.
+ * This does not translate remote JSON, WebView, or images.
+ */
+@Suppress("unused")
+val englishResourceStringsPatch = bytecodePatch(
+    name = "TaobaoLingo: English resource strings",
+    description = "English string resources without mutating global locale or protocol language (experimental).",
+    default = false
+) {
+    compatibleWith(taobao)
+    execute {
+        LocalizedStringLookup.method.addInstructions(
+            0,
+            """
+                sget-object v0, Lcom/alibaba/ability/localization/LocalizationManager;->INSTANCE:Lcom/alibaba/ability/localization/LocalizationManager;
+                invoke-virtual {v0}, Lcom/alibaba/ability/localization/LocalizationManager;->b()Landroid/content/Context;
+                move-result-object v0
+                if-eqz v0, :taobaolingo_original
+                invoke-virtual {v0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+                move-result-object v1
+                invoke-virtual {v1}, Landroid/content/res/Resources;->getConfiguration()Landroid/content/res/Configuration;
+                move-result-object v1
+                new-instance v2, Landroid/content/res/Configuration;
+                invoke-direct {v2, v1}, Landroid/content/res/Configuration;-><init>(Landroid/content/res/Configuration;)V
+                sget-object v1, Ljava/util/Locale;->ENGLISH:Ljava/util/Locale;
+                invoke-virtual {v2, v1}, Landroid/content/res/Configuration;->setLocale(Ljava/util/Locale;)V
+                invoke-virtual {v0, v2}, Landroid/content/Context;->createConfigurationContext(Landroid/content/res/Configuration;)Landroid/content/Context;
+                move-result-object v0
+                invoke-virtual {v0}, Landroid/content/Context;->getResources()Landroid/content/res/Resources;
+                move-result-object v0
+                invoke-virtual {v0, p0}, Landroid/content/res/Resources;->getString(I)Ljava/lang/String;
+                move-result-object v0
+                return-object v0
+                :taobaolingo_original
+            """.trimIndent()
         )
     }
 }

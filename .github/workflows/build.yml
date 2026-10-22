@@ -2,7 +2,24 @@ name: Build TaobaoLingo
 on:
   push:
     branches: [main]
+    paths:
+      - 'patches/**'
+      - 'settings.gradle.kts'
+      - 'build.gradle.kts'
+      - 'gradle.properties'
+      - 'gradle/**'
+      - '.github/workflows/build.yml'
+      - 'scripts/verify_apk.py'
+      - 'scripts/build_legacy_cli.py'
   pull_request:
+    paths:
+      - 'patches/**'
+      - 'settings.gradle.kts'
+      - 'build.gradle.kts'
+      - 'gradle.properties'
+      - 'gradle/**'
+      - '.github/workflows/build.yml'
+      - 'scripts/**'
   workflow_dispatch:
 permissions:
   contents: read

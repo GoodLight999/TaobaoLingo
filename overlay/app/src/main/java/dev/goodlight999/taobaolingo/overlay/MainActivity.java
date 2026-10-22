@@ -102,11 +102,6 @@ public final class MainActivity extends Activity {
             startActivity(i);
             return;
         }
-        if (Build.VERSION.SDK_INT >= 33 &&
-                checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) !=
-                        android.content.pm.PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 2102);
-        }
         status.setText("Androidの画面共有許可を確認中");
         MediaProjectionManager mgr = (MediaProjectionManager)
                 getSystemService(Context.MEDIA_PROJECTION_SERVICE);

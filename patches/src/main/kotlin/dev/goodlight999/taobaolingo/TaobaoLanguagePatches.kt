@@ -37,6 +37,14 @@ private object LocaleGetter : Fingerprint(
     isStatic = false
 )
 
+private object ResourceLocaleUpdater : Fingerprint(
+    definingClass = "Lcom/alibaba/ability/localization/LocalizationManager;",
+    name = "i",
+    returnType = "V",
+    parameters = listOf("Landroid/content/Context;", LANGUAGE),
+    isStatic = false
+)
+
 private object InternationalFlag : Fingerprint(
     definingClass = LOCALIZATION,
     name = "o",
@@ -62,7 +70,7 @@ private object SceneFlag : Fingerprint(
 val forceEnglishUiPatch = bytecodePatch(
     name = "TaobaoLingo: Force English UI",
     description = "Use bundled English locale while retaining configured shopping region (experimental).",
-    default = true
+    default = false
 ) {
     compatibleWith(taobao)
     execute {
@@ -97,5 +105,26 @@ val enableInternationalUiPatch = bytecodePatch(
     execute {
         InternationalFlag.method.addInstructions(0, "const/4 v0, 0x1\nreturn v0")
         SceneFlag.method.addInstructions(0, "const/4 v0, 0x1\nreturn v0")
+    }
+}
+
+/**
+ * Conservative UI-only localization experiment.
+ * Only modify the Android Resources/Configuration updater's Language argument.
+ * Do not override application language getters that feed networking / edition APIs.
+ * LocalizationManager.a() invokes this method on each activity creation.
+ */
+@Suppress("unused")
+val englishUiResourcesPatch = bytecodePatch(
+    name = "TaobaoLingo: English UI resources only",
+    description = "Set Android UI resources to English without changing language getters used by network and region logic (experimental).",
+    default = false
+) {
+    compatibleWith(taobao)
+    execute {
+        ResourceLocaleUpdater.method.addInstructions(
+            0,
+            "sget-object p2, $LANGUAGE->ENGLISH:$LANGUAGE"
+        )
     }
 }

@@ -2,7 +2,7 @@
 
 Experimental [Morphe](https://github.com/MorpheApp/morphe-patcher) patches for Taobao's English interface, developed for `com.taobao.taobao` **10.66.30** (arm64-v8a APK). Unaffiliated with Taobao, Alibaba, or Morphe.
 
-****STATUS: BROKEN ON DEVICE (original Force English UI patch).** On a real Android device the globally-forced English patch made the bottom navigation English but left the home content black, Account non-responsive, and login failed with a network error. **Do not use the old Force English UI patch as a working app.** All patches are now disabled by default. A narrower UI resources-only experiment is available, but **has not been runtime-verified**. A separately generated re-signed, **zero-patch diagnostic APK** can test whether re-signing itself breaks account/network access. Details: [issue #1](../../issues/1).
+**STATUS: BROKEN ON DEVICE (original Force English UI patch).** On a real Android device the globally-forced English patch made the bottom navigation English but left the home content black, Account non-responsive, and login failed with a network error. **Do not use the old Force English UI patch as a working app.** All patches are now disabled by default. A narrower UI resources-only experiment is available, but **has not been runtime-verified**. A separately generated re-signed, **zero-patch diagnostic APK** can test whether re-signing itself breaks account/network access. Details: [issue #1](../../issues/1).
 
 ## Patches
 
@@ -53,7 +53,7 @@ python3 scripts/build_legacy_cli.py --desktop-jar /path/to/morphe-desktop-1.18.1
 
 This test output is **for legacy Desktop CLI testing only**, and must not be imported in Morphe Manager.
 
-## Last remaining checks: on-device
+## On-device diagnostic sequence
 
 1. First install the re-signed, zero-patch control APK and verify home/account/login; it isolates signature integrity from locale logic. If this control fails, do not continue with language patches. If it works, test the experimental UI-resources-only APK. The application APK is proprietary and therefore not committed to GitHub.\n2. Install the selected patched APK. A re-signed APK generally cannot update the original app in place because the signing certificates differ. If you need to uninstall the original, retain any information necessary for login again.
 3. Confirm app startup, login, and actual English rendering in settings, listings, product details, cart, and profile. Note any unchanged Chinese text or WebView pages.

@@ -1,50 +1,64 @@
 # TaobaoLingo
 
-Experimental Morphe patches for Taobao localization. This project is independent of Taobao and Morphe.
+Experimental [Morphe](https://github.com/MorpheApp/morphe-patcher) patches for Taobao's English interface, developed for `com.taobao.taobao` **10.66.30** (arm64-v8a APK). Unaffiliated with Taobao, Alibaba, or Morphe.
 
-**Status: prototype; Android runtime not yet tested.** Developed against `com.taobao.taobao` 10.66.30 (arm64-v8a). Build success and DEX signature matching **do not establish** that the patched app works.
+**Status:** The Morphe 2.0 `.mpp` builds on GitHub Actions. Independently, a Desktop 1.18.1-compatible build of the same patch logic **successfully patched, rebuilt, aligned, and signed the supplied Taobao APK**. DEX instructions and APK signing have been verified. **Android installation, app startup, and visible English-language UI have *not* yet been tested.** This is still an experimental patch, not a confirmed working translation.
 
-## Available patches
+## Patches
 
-| Patch | Default | Purpose |
+| Patch | Default | Function |
 | --- | --- | --- |
-| Force English UI | On | Override Taobao's bundled language getter and Locale getter to English. |
-| International UI flags | Off | Switch on two international-edition checks, which may affect behavior beyond language. |
+| TaobaoLingo: Force English UI | On | Make `Localization.h()` return Taobao's `Language.ENGLISH` and `LocalizationManager.d()` return `Locale.ENGLISH`. |
+| TaobaoLingo: International UI flags | Off | Alter two international-edition checks, which can affect more than just UI. |
 
-No persisted account, country, shipping, or payment settings are directly modified. App consumers of the overridden locale might nevertheless alter non-UI behavior. Server-rendered and image text is not translated. **Japanese translation remains a future feature**.
+The default patch does **not** rewrite stored shopping country, shipping addresses, or account preferences. Other app logic might nevertheless rely on the overwritten locale; the true region behavior is unknown until a device test. WebViews, server-rendered material, product descriptions, and text embedded in images may remain Chinese. Japanese translation is not implemented.
 
-## Build
+## Download the Morphe patch
 
-Requires JDK 21 and Gradle 9.8.1. See the [Build workflow](.github/workflows/build.yml) for the CI command and its downloadable `.mpp` artifact after a successful run.
+Download the `.mpp` build artifact from a successful [GitHub Actions build](../../actions/workflows/build.yml), then import it as a custom patch source in a **compatible** Morphe Manager. Select original Taobao **10.66.30** APK and initially enable **only Force English UI**.
 
-```bash
-# Github Packages authentication is required for Morphe dependencies.
-export GITHUB_ACTOR=your-user
-export GITHUB_TOKEN=your-read-packages-token
+**Morphe version caveat:** The main `.mpp` targets Morphe Patcher **2.0.0**. Morphe Desktop **1.18.1** uses Patcher **1.15.1** and *cannot load* the main `.mpp` (`NoSuchMethodError` on `Compatibility`). For offline proof, we compiled an **older-API CLI test bundle** from the same patch source. This compatibility bundle is **not** a Manager-compatible `.mpp` and does not contain `classes.dex`. See [full offline test report](analysis/offline_verification.md).
+
+## Build from source
+
+JDK 21 and Gradle 9.8.1 are required. GitHub Packages credentials with `read:packages` are required, even for public dependencies.
+
+```sh
+export GITHUB_ACTOR=your-username
+export GITHUB_TOKEN=your-GitHub-PAT-with-read-packages
 gradle buildAndroid
+# patches/build/libs/*.mpp
 ```
 
-When ready, import the generated `patches/build/libs/*.mpp` as a local source in Morphe Manager.
+The CI workflow builds the same artifact and offers it as a downloadable workflow artifact (no proprietary APK is included).
 
-## APK verification
+## Independent verification
 
-```bash
-python3 scripts/verify_apk.py /path/to/taobao-10.66.30.apk --strict-hash
+The full evidence and SHA-256 hashes are documented in [`analysis/offline_verification.md`](analysis/offline_verification.md). Verified steps include matching the source APK, patch application without failed patches, DEX output checks for the two English-return instructions, unchanged original international flag methods, ZIP integrity, and Android APK signature schemes **v1/v2/v3**.
+
+To verify the original Taobao APK locally:
+
+```sh
+python3 scripts/verify_apk.py /path/to/original-taobao-10.66.30.apk --strict-hash
 ```
 
-The original APK is **not** distributed here. The script verifies the SHA-256 and DEX definitions against the originally studied APK. Matching the APK is not proof of successful patch application.
+The input APK and its extracted proprietary code are never committed to this repository.
 
-## Device test
+To reproduce the legacy offline test bundle (requires Morphe Desktop 1.18.1 JAR and `kotlinc`):
 
-1. In Morphe, patch an original `10.66.30` APK, enabling **only Force English UI**.
-2. Confirm successful patching and launch; check settings, product listing/detail, cart, and account UI.
-3. Confirm that shipping location and currency are still correct.
-4. If needed, retry with International UI flags and report differences.
+```sh
+python3 scripts/build_legacy_cli.py --desktop-jar /path/to/morphe-desktop-1.18.1-all.jar --out /tmp/taobaolingo-legacy.mpp
+```
 
-Modifying an APK changes its signature; replacing an original installation in place usually fails. Log out or back up your session as needed.
+This test output is **for legacy Desktop CLI testing only**, and must not be imported in Morphe Manager.
 
-## Contributing
+## Last remaining checks: on-device
 
-Please attach Morphe patch logs and a description of untranslated views in an issue. Never include account credentials.
+1. Install the patched APK. A re-signed APK generally cannot update the original app in place because the signing certificates differ. If you need to uninstall the original, retain any information necessary for login again.
+2. Confirm app startup, login, and actual English rendering in settings, listings, product details, cart, and profile. Note any unchanged Chinese text or WebView pages.
+3. Confirm shopping region, shipping destination, currency, and purchase flow remain as intended.
+4. Record logs and screenshots (without credentials or personal data) in GitHub Issues if anything fails. Do not enable the optional international flags for the first run.
 
-GPL-3.0-only. Unaffiliated with Alibaba, Taobao, or Morphe.
+## License
+
+GPL-3.0-only. The Taobao APK is proprietary and is **not** redistributed by this repository.

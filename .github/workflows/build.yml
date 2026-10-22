@@ -42,6 +42,16 @@ jobs:
               assert any("TaobaoLanguagePatchesKt.class" in n for n in names)
           print("Verified Morphe 2.0.0 bundle:", bundles[0])
           PY
+      - name: Syntax-check ADB diagnostic PowerShell
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $parseErrors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile('scripts/adb_locale_probe.ps1', [ref]$tokens, [ref]$parseErrors) | Out-Null
+          if ($parseErrors.Count -gt 0) {
+            $parseErrors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }
       - name: Upload Morphe MPP
         uses: actions/upload-artifact@v4
         with:

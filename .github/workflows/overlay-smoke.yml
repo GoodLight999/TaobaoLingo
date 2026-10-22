@@ -35,6 +35,13 @@ jobs:
             1eade4cf2df6ea8eeead4902c635897ba12aaa32aac4389eaae0fdb498a5b830 \
             "$RUNNER_TEMP/emulator-36.6.11.zip" | sha256sum --check
           unzip -q -o "$RUNNER_TEMP/emulator-36.6.11.zip" -d "$ANDROID_SDK_ROOT"
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends libpulse0 libnss3 libasound2t64
+          ldd "$ANDROID_SDK_ROOT/emulator/qemu/linux-x86_64/qemu-system-x86_64" | tee "$RUNNER_TEMP/emulator-ldd.txt"
+          if grep -q 'not found' "$RUNNER_TEMP/emulator-ldd.txt"; then
+            echo "::error::Emulator is missing Linux shared libraries"
+            exit 1
+          fi
           "$ANDROID_SDK_ROOT/emulator/emulator" -version
       - name: Install Android 15 Google APIs image
         shell: bash

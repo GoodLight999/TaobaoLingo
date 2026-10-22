@@ -49,7 +49,20 @@ jobs:
         run: |
           set -euo pipefail
           sudo chmod 666 /dev/kvm
+          image_dir="$ANDROID_SDK_ROOT/system-images/android-35/google_apis/x86_64"
+          # Legacy avdmanager requires devices.xml even though current Android images may omit it.
+          if [ ! -s "$image_dir/devices.xml" ]; then
+            cat > "$image_dir/devices.xml" <<'XML'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <d:devices xmlns:d="http://schemas.android.com/sdk/devices/7"
+                     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+          </d:devices>
+          XML
+          fi
+          avdmanager delete avd --name taobaolingo-ci >/dev/null 2>&1 || true
+          rm -rf "$HOME/.android/avd/taobaolingo-ci.avd" "$HOME/.android/avd/taobaolingo-ci.ini"
           echo no | avdmanager create avd --force -n taobaolingo-ci -k 'system-images;android-35;google_apis;x86_64' --device pixel_6
+          "$ANDROID_SDK_ROOT/emulator/emulator" -list-avds | grep -x taobaolingo-ci
           "$ANDROID_SDK_ROOT/emulator/emulator" -avd taobaolingo-ci \
             -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim \
             -accel on -memory 3072 > "$RUNNER_TEMP/emulator.log" 2>&1 &
@@ -60,7 +73,24 @@ jobs:
             tail -70 "$RUNNER_TEMP/emulator.log" || true
           }
           trap cleanup EXIT
-          timeout 450 bash -c 'until [ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d "\r")" = "1" ]; do sleep 5; done'
+          booted=false
+          for attempt in $(seq 1 64); do
+            if ! kill -0 "$emulator_pid" 2>/dev/null; then
+              echo "::error::Emulator process exited during boot"
+              tail -150 "$RUNNER_TEMP/emulator.log"
+              exit 1
+            fi
+            if [ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d "\r")" = "1" ]; then
+              booted=true
+              break
+            fi
+            sleep 5
+          done
+          if [ "$booted" != true ]; then
+            echo "::error::Emulator did not finish booting"
+            tail -150 "$RUNNER_TEMP/emulator.log"
+            exit 1
+          fi
           adb shell input keyevent 82
           adb install -r overlay/app/build/outputs/apk/debug/app-debug.apk
           adb install -r overlay/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
@@ -68,6 +98,7 @@ jobs:
           sleep 8
           adb shell uiautomator dump /sdcard/window.xml
           adb pull /sdcard/window.xml "$RUNNER_TEMP/window.xml"
+          adb exec-out screencap -p > "$RUNNER_TEMP/taobaolingo-screen.png"
           grep -q 'TaobaoLingo' "$RUNNER_TEMP/window.xml"
           grep -q '画面翻訳を開始' "$RUNNER_TEMP/window.xml"
           pid="$(adb shell pidof dev.goodlight999.taobaolingo.overlay)"
@@ -76,3 +107,15 @@ jobs:
             | tee "$RUNNER_TEMP/ocr-test.log"
           grep -q 'OK (1 test)' "$RUNNER_TEMP/ocr-test.log"
           echo 'PASS: APK installed, activity rendered, process alive, Chinese OCR recognized image'
+
+      - name: Upload emulator screenshots and diagnostic logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: taobaolingo-emulator-smoke-diagnostics
+          path: |
+            ${{ runner.temp }}/taobaolingo-screen.png
+            ${{ runner.temp }}/window.xml
+            ${{ runner.temp }}/emulator.log
+            ${{ runner.temp }}/ocr-test.log
+          if-no-files-found: ignore

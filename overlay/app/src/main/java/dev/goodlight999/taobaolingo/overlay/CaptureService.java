@@ -90,8 +90,7 @@ public final class CaptureService extends Service {
                     WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
                     WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
                             | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-                            | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
-                            | WindowManager.LayoutParams.FLAG_SECURE,
+                            | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
                     PixelFormat.TRANSLUCENT);
             layer.gravity = Gravity.TOP | Gravity.START;
             // Android 12+ permits touch-through of untrusted overlays with alpha <= 0.8.
@@ -107,7 +106,14 @@ public final class CaptureService extends Service {
                 }
             }, main);
 
-            Rect bounds = wm.getMaximumWindowMetrics().getBounds();
+            Rect bounds;
+            if (Build.VERSION.SDK_INT >= 30) {
+                bounds = wm.getMaximumWindowMetrics().getBounds();
+            } else {
+                android.util.DisplayMetrics dm = new android.util.DisplayMetrics();
+                wm.getDefaultDisplay().getRealMetrics(dm);
+                bounds = new Rect(0, 0, dm.widthPixels, dm.heightPixels);
+            }
             screenWidth = bounds.width();
             screenHeight = bounds.height();
             densityDpi = getResources().getDisplayMetrics().densityDpi;

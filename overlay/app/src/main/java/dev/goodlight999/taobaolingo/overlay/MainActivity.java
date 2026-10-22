@@ -122,6 +122,12 @@ public final class MainActivity extends Activity {
         svc.putExtra(CaptureService.EXTRA_LANGUAGE,
             language.getSelectedItemPosition() == 0 ? "ja" : "en");
         startForegroundService(svc);
-        status.setText("翻訳処理を開始しました。Taobaoへ切り替えてください");
+        status.setText("翻訳処理を開始しました。Taobaoを開きます");
+        Intent taobao = getPackageManager().getLaunchIntentForPackage("com.taobao.taobao");
+        if (taobao != null) {
+            startActivity(taobao);
+        } else {
+            status.setText("翻訳を開始しました。Taobaoを手動で開いてください");
+        }
     }
 }

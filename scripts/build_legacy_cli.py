@@ -13,14 +13,16 @@ import zipfile
 SOURCE = Path(__file__).resolve().parents[1] / 'patches/src/main/kotlin/dev/goodlight999/taobaolingo/TaobaoLanguagePatches.kt'
 
 def adapt(source):
-    if source.count('isStatic = true') != 3 or source.count('isStatic = false') != 2:
-        raise ValueError('Expected five fingerprints; review source before regenerating')
+    if source.count('isStatic = true') != 4 or source.count('isStatic = false') != 2:
+        raise ValueError('Expected six fingerprints; review source before regenerating')
     source = source.replace('import app.morphe.patcher.Fingerprint',
                             'import com.android.tools.smali.dexlib2.AccessFlags\nimport app.morphe.patcher.Fingerprint', 1)
     source = source.replace('isStatic = true',
                             'accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.STATIC, AccessFlags.FINAL)', 1)
     source = source.replace('isStatic = false',
                             'accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL)', 2)
+    source = source.replace('isStatic = true',
+                            'accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.STATIC, AccessFlags.FINAL)', 1)
     source = source.replace('isStatic = true',
                             'accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.STATIC, AccessFlags.FINAL)', 1)
     source = source.replace('isStatic = true',

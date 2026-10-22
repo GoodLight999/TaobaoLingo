@@ -24,6 +24,24 @@ jobs:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gradle buildAndroid --no-daemon --stacktrace
+      - name: Verify build artifact and Python tools
+        run: |
+          python3 -m py_compile scripts/verify_apk.py scripts/build_legacy_cli.py
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+
+          bundles = list(Path("patches/build/libs").glob("*.mpp"))
+          assert len(bundles) == 1, f"Expected exactly one .mpp, got {bundles!r}"
+          with ZipFile(bundles[0]) as jar:
+              assert jar.testzip() is None, "Corrupted MPP archive"
+              names = set(jar.namelist())
+              assert "classes.dex" in names, "Missing Android DEX for Morphe Manager"
+              manifest = jar.read("META-INF/MANIFEST.MF").decode()
+              assert "Patcher-Version: 2.0.0" in manifest, manifest
+              assert any("TaobaoLanguagePatchesKt.class" in n for n in names)
+          print("Verified Morphe 2.0.0 bundle:", bundles[0])
+          PY
       - name: Upload Morphe MPP
         uses: actions/upload-artifact@v4
         with:

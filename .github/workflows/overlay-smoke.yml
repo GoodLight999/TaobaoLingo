@@ -28,6 +28,26 @@ jobs:
         run: |
           ls -l /dev/kvm
           sudo chmod 666 /dev/kvm
+      - name: Pre-install Emulator with corrupt-download retries
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdk="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          manager="$(command -v sdkmanager || true)"
+          if [ -z "$manager" ]; then
+            manager="$(ls "$sdk"/cmdline-tools/latest/bin/sdkmanager "$sdk"/cmdline-tools/*/bin/sdkmanager 2>/dev/null | head -1)"
+          fi
+          for attempt in 1 2 3; do
+            if yes | "$manager" --install emulator --channel=0; then
+              echo "Android emulator installed"
+              exit 0
+            fi
+            echo "Corrupted SDK download or transient installation problem; retry $attempt"
+            rm -rf "$sdk/emulator" "$sdk/.temp" "$sdk/.downloadIntermediates" || true
+            sleep 10
+          done
+          echo "::error::Could not obtain intact emulator after three attempts"
+          exit 1
       - name: Install and launch on Android 15 emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:

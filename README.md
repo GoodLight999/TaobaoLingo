@@ -15,6 +15,12 @@ Experimental [Morphe](https://github.com/MorpheApp/morphe-patcher) patches for T
 
 The original patch does **not** rewrite stored shopping country, shipping addresses, or account preferences. Other app logic might nevertheless rely on the overwritten locale; the true region behavior is unknown until a device test. WebViews, server-rendered material, product descriptions, and text embedded in images may remain Chinese. Japanese translation is not implemented.
 
+## Non-repackaging Android translator
+
+If a rebuilt, re-signed Taobao APK cannot log in, [TaobaoLingo Overlay](overlay/README.md) avoids modifying the original Taobao app. This independently installed Android helper uses user-authorized screen capture, ML Kit Chinese text recognition and on-device Chinese-to-Japanese/English translation with touch-through text overlays. Models may need downloading the first time. The experimental companion is built by [Android CI](.github/workflows/overlay.yml) and has its own [emulator smoke test](.github/workflows/overlay-smoke.yml).
+
+**Status:** Android compilation and artifact creation pass; actual OCR/translation over Taobao is still not confirmed on a physical phone. There is no demonstrated fix to Taobao's login/network failure when its APK is re-signed.
+
 ## Download the Morphe patch
 
 Download the `.mpp` build artifact from a successful [GitHub Actions build](../../actions/workflows/build.yml), then import it as a custom patch source in a **compatible** Morphe Manager. Select original Taobao **10.66.30** APK and, **only after verifying that a re-signed zero-patch APK works on the device**, optionally try **only English resource strings** (the most narrowly verified candidate). Never enable the known-broken Force English UI patch.

@@ -7,8 +7,16 @@ An independent Android companion implementing screen OCR and on-device Chineseâ†
 - Captures screen pixels to volatile memory at a throttled interval. **No screenshots, text or login details are uploaded by this app.**
 - Draws touch-through translation labels aligned to detected Chinese text blocks; it never modifies, re-signs, or hooks into the original Taobao APK.
 - Support: Chinese â†’ Japanese and English. It translates visible text rather than dynamically replacing the original application's native resources.
-- Android 10+ (`minSdk=29`), foreground service notification, stop control in app.
+- Android 10+ (`minSdk=29`), foreground service notification, stop control in app. After approving screen sharing, the helper attempts to open the original Taobao automatically.
 - Screenshot-blocked/secure content, images without clear text, and changing layout can reduce accuracy.
+
+## Usage
+
+1. Install **the genuine Taobao APK** and the separately signed TaobaoLingo Overlay helper.
+2. In the helper, select Japanese or English, enable overlay permission, and approve Android's screen-sharing prompt.
+3. The helper attempts to open genuine Taobao; OCR labels appear over recognized Chinese text after the on-device translation model finishes downloading. Stop from the helper app or its foreground-service notification.
+
+The helper does **not** authenticate with Taobao; Taobao retains its own login session and network protocols. It requires screen-capture consent and therefore cannot translate protected/black-screen content.
 
 ## Build
 

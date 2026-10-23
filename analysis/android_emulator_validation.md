@@ -46,3 +46,18 @@ PASS: APK installed, activity rendered, process alive,
 ```
 
 The second test downloaded the ML Kit Chinese→Japanese model on the Android 15 emulator, translated Chinese product-search text, and asserted nonempty, changed output. This validates the OCR and translation engines independently of Taobao. The test still does **not** prove MediaProjection capture or position-aligned overlays over the actual Taobao app, which are being tested separately.
+
+
+## Android 15 MediaProjection permission / foreground service
+
+[Run 39880827145](https://github.com/GoodLight999/TaobaoLingo/actions/runs/39880827145) automatically granted the helper's overlay app-op, pressed the actual "画面翻訳を開始" button, selected `Entire screen` in the Android 15 system dialog, and selected `Start`.
+
+Android's system log confirmed:
+- MediaProjection start token issued;
+- successful `VirtualDisplay` creation at 1080×2400, named `TaobaoLingoOverlay`;
+- the helper's `CaptureService` present in Android `dumpsys activity services`;
+- no fatal app crash in the collected log window.
+
+The workflow was **marked failed by a false-negative test assertion** which expected a full Java package name while Android prints `package/.CaptureService`. The assertion was corrected in commit `1ae717269886b9e010dc10ee6f0219ebdcbbc162` and now also checks the display by name. The runtime event is confirmed, but this run is not counted as a green CI workflow.
+
+Original Taobao login and real product translation remain unverified; the emulator does not install the proprietary ARM64-only Taobao APK.

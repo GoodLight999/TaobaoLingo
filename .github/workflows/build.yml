@@ -79,7 +79,7 @@ jobs:
           test -s "$JAR"
           javac -cp "$JAR" -d /tmp/taobaolingo-tests \
             tests/VerifyJapanPicker.java tests/VerifyLocalizedResources.java \
-            tests/VerifyDinamicXNativeLabels.java
+            tests/VerifyDinamicXNativeLabels.java tests/AnalyzeDinamicXRoutes.java
       - name: Syntax-check ADB diagnostic PowerShell
         shell: pwsh
         run: |

@@ -10,6 +10,9 @@ import app.morphe.patcher.patch.ApkFileType
 import app.morphe.patcher.patch.AppTarget
 import app.morphe.patcher.patch.Compatibility
 import app.morphe.patcher.patch.bytecodePatch
+import app.morphe.patcher.patch.PatchException
+import com.android.tools.smali.dexlib2.Opcode
+import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
 
 private const val SITE_MODEL = "Lcom/taobao/android/editionswitcher/boarding/LocaleModel\$SiteLangModel;"
 private const val LANG_MODEL = "Lcom/taobao/android/editionswitcher/boarding/LocaleModel\$LangModel;"
@@ -54,7 +57,15 @@ val japanEnglishServerPickerPatch = bytecodePatch(
     compatibleWith(editionCompatibility)
     dependsOn(japanEnglishPickerPatch)
     execute {
-        EditionLocaleResponse.method.addInstructions(
+        val method = EditionLocaleResponse.method
+        val anchor = method.implementation?.instructions?.getOrNull(86)
+        val anchorRef = (anchor as? ReferenceInstruction)?.reference?.toString()
+        if (anchor?.opcode != Opcode.SPUT_OBJECT ||
+            anchorRef != "Lcom/taobao/android/editionswitcher/boarding/LocaleModel;->reqData:Lcom/taobao/android/editionswitcher/boarding/LocaleModel;"
+        ) {
+            throw PatchException("Expected Taobao 10.66.30 LocaleModel.reqData assignment at instruction 86")
+        }
+        method.addInstructions(
             87,
             """
                 iget-object v9, v6, Lcom/taobao/android/editionswitcher/boarding/LocaleModel;->currentCountryInfo:$SITE_MODEL

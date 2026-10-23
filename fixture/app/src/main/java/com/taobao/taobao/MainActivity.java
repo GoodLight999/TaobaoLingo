@@ -3,6 +3,7 @@ package com.taobao.taobao;
 import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
+import android.text.SpannableString;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -29,6 +30,9 @@ public final class MainActivity extends Activity {
         standard.setText("我的淘宝");
         add(layout, "BUTTER_SET=" + standard.text);
 
+        standard.setText(new SpannableString("我的淘宝"));
+        add(layout, "BUTTER_SPANNABLE= " + standard.text);
+
         standard.onSetStringAttribute(TEXT, "我的订单");
         add(layout, "BUTTER_ATTR=" + standard.text);
 
@@ -38,6 +42,9 @@ public final class MainActivity extends Activity {
         cx5 fast = new cx5();
         fast.setText("搜索");
         add(layout, "FAST_SET=" + fast.text);
+
+        fast.setText(new SpannableString("搜索"));
+        add(layout, "FAST_SPANNABLE= " + fast.text);
 
         fast.onSetStringAttribute(TEXT, "购物车");
         add(layout, "FAST_ATTR=" + fast.text);

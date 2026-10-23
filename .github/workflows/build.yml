@@ -11,6 +11,8 @@ on:
       - '.github/workflows/build.yml'
       - 'scripts/verify_apk.py'
       - 'scripts/build_legacy_cli.py'
+      - 'scripts/verify_japan_picker.py'
+      - 'tests/**'
   pull_request:
     paths:
       - 'patches/**'
@@ -43,7 +45,7 @@ jobs:
         run: gradle buildAndroid --no-daemon --stacktrace
       - name: Verify build artifact and Python tools
         run: |
-          python3 -m py_compile scripts/verify_apk.py scripts/build_legacy_cli.py
+          python3 -m py_compile scripts/verify_apk.py scripts/build_legacy_cli.py scripts/verify_japan_picker.py
           python3 - <<'PY'
           from pathlib import Path
           from zipfile import ZipFile
@@ -57,8 +59,21 @@ jobs:
               manifest = jar.read("META-INF/MANIFEST.MF").decode()
               assert "Patcher-Version: 2.0.0" in manifest, manifest
               assert any("TaobaoLanguagePatchesKt.class" in n for n in names)
+              assert any("JapanEnglishServerPatchKt.class" in n for n in names)
+              assert any("JapanEnglishPickerPatchKt.class" in n for n in names)
           print("Verified Morphe 2.0.0 bundle:", bundles[0])
           PY
+      - name: Compile independent DEX verification tools
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p /tmp/taobaolingo-cli /tmp/taobaolingo-tests
+          gh release download v1.18.1 --repo MorpheApp/morphe-desktop \
+            --pattern "*-all.jar" --dir /tmp/taobaolingo-cli
+          JAR="$(find /tmp/taobaolingo-cli -name '*-all.jar' -print -quit)"
+          test -s "$JAR"
+          javac -cp "$JAR" -d /tmp/taobaolingo-tests \
+            tests/VerifyJapanPicker.java tests/VerifyLocalizedResources.java
       - name: Syntax-check ADB diagnostic PowerShell
         shell: pwsh
         run: |

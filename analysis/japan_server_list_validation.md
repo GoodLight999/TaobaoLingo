@@ -49,3 +49,13 @@ java -cp tests:morphe-desktop-1.18.1-all.jar VerifyJapanPicker original.apk patc
 **This does not prove a usable Taobao app.** Morphe's APK repackaging **re-signs** the app; Taobao may reject the new certificate or fail authentication for other reasons. The **server** may separately reject a Japan + English selection even if the UI offers it. Full screen language coverage, account login, shopping region persistence, and network responses are **not runtime-tested**.
 
 These experiments keep protocol-facing language getters unchanged and are separate from the older broken global-language override. The raw English resource-string patch is a third, independent option, not automatically required to test the locale selector.
+
+## Post-verification: anchored callback build
+
+The strict instruction-86 precondition was also compiled against the older Morphe Desktop patch API, executed on the original APK with **both** patches enabled, and verified with the independent 595,518-method DEX comparator. All checks passed.
+
+- Anchored experiment APK SHA-256: `a487d293743ee1f4ddc0316cf5cbe6849f1d715150c40317109789699820bab2`.
+- Compared with the earlier non-anchored APK, every ZIP entry excluding signing metadata has **identical uncompressed bytes**; the different overall hashes reflect separate signing output.
+- This confirms the anchor check is applied and has no effect on the actual patched code when the input matches the expected version.
+
+The signed APK was generated for offline validation only and is not committed to GitHub.

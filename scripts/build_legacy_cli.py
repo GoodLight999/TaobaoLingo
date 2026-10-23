@@ -16,6 +16,7 @@ SOURCES = [
     "TaobaoLanguagePatches.kt",
     "JapanEnglishPickerPatch.kt",
     "JapanEnglishServerPatch.kt",
+    "DinamicXEnglishLabelsPatch.kt",
 ]
 SOURCE_DIR = ROOT / "patches/src/main/kotlin/dev/goodlight999/taobaolingo"
 IMPORT = "import app.morphe.patcher.Fingerprint"
@@ -33,6 +34,12 @@ def adapt(source: str, name: str) -> str:
     if name == "JapanEnglishServerPatch.kt":
         if source.count("isStatic = false") != 1 or "isStatic = true" in source:
             raise ValueError("Expected one public instance response fingerprint")
+        return source.replace(IMPORT, FLAGS_IMPORT, 1).replace(
+            "isStatic = false", "accessFlags = listOf(AccessFlags.PUBLIC)",
+        )
+    if name == "DinamicXEnglishLabelsPatch.kt":
+        if source.count("isStatic = false") != 2 or "isStatic = true" in source:
+            raise ValueError("Expected two DinamicX instance setText fingerprints")
         return source.replace(IMPORT, FLAGS_IMPORT, 1).replace(
             "isStatic = false", "accessFlags = listOf(AccessFlags.PUBLIC)",
         )

@@ -16,6 +16,18 @@ Both are patched to read Android's bundled English resources from a **separate c
 
 **Scope:** native resources with an available English translation. Dynamic pages, server-rendered text, WebViews, product names, product images, and strings not included in the English resource table are **not** translated. Japanese UI is **not yet implemented**.
 
+## Experimental native DinamicX English labels — new development
+
+The old `Localization.q/r` patch did not establish that any actual Taobao screen text became English. A new **opt-in** patch, `TaobaoLingo: Native DinamicX English labels (experimental)`, instead targets Taobao's **native DinamicX text components**, used with dynamically delivered screen content.
+
+This new implementation has **108 exact-match Chinese→English interface labels**, including `我的淘宝`→`My Taobao`, `我的订单`→`My Orders`, and `搜索`→`Search`. The translation changes what native UI widgets display; **there is no OCR, overlay or remote translation service**.
+
+Static inspection of the original Taobao 10.66.30 APK identified two DinamicX widget classes, each of which has a direct `setText(CharSequence)` path **and a separate template attribute path that writes directly to its `text` field**. The patch updates all **four** methods, guarding the template attributes by the precise `TEXT` property hash `38178040921`, so font and other attributes are not intentionally translated.
+
+**Offline validation:** A signed 108-label Desktop CLI proof APK was created from the original Taobao APK using equivalent four-method injection instructions. Independent dexlib2 comparison found exactly **four changed methods among 595,518**, intact original instruction bodies, identical unrelated app resources, and valid APK v2/v3 signatures. The Morphe 2.0 `.mpp` also builds in CI. See [analysis and test evidence](analysis/native_dinamicx_text_binding.md) and [independent verifier](tests/VerifyDinamicXNativeLabels.java).
+
+**This does not establish runtime success.** The screen must be compared against the *original* Chinese UI before any translation is claimed. The unresolved Account/login failure and the re-signing question still apply. Product descriptions and unknown UI labels remain Chinese. Keep the patch disabled unless deliberately testing.
+
 ## Experimental native Japan + English locale selector
 
 Taobao's bundled onboarding dataset defines 23 regions; **JP offers Chinese only** while SG has English. The patch set also now contains two **disabled-by-default** experiments:
@@ -55,7 +67,7 @@ Morphe Desktop **1.18.1** bundles an older Patcher (1.15.1), which cannot direct
 
 Details: [latest binary verification](analysis/two_string_resource_validation.md), [runtime regression tracking](../../issues/1), and independent offline verifier `tests/VerifyLocalizedResources.java`.
 
-**Important limitation:** APK signature validity proves only the repackaged file is structurally sound. It does not prove that Taobao will accept a different signing certificate, log in, communicate with its servers, or render usable pages. **The login failure is not resolved yet.**
+**Important limitation:** No English localization has yet been demonstrated by the user on a physical phone. English error/recovery screens and Terms Agree buttons were already English. APK signature validity proves only the repackaged file is structurally sound. It does not prove that Taobao will accept a different signing certificate, log in, communicate with its servers, or render usable pages. **The login failure is not resolved yet.**
 
 Morphe's official [Root mount](https://github.com/MorpheApp/morphe-manager/blob/main/docs/installers.md) avoids installing a re-signed APK, keeping the original app installed under its original package identity, but requires a rooted phone; ordinary installation does not have this property. No assumption is made that your phone is rooted.
 

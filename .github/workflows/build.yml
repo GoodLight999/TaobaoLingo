@@ -64,6 +64,10 @@ jobs:
               assert any("JapanEnglishPickerPatchKt.class" in n for n in names)
           print("Verified Morphe 2.0.0 bundle:", bundles[0])
           PY
+      - name: Run independent APK triage regression fixtures
+        run: |
+          python3 -m py_compile scripts/triage_apk_variants.py tests/test_triage_apk_variants.py
+          python3 -m unittest discover -s tests -p 'test_*.py' -v
       - name: Compile independent DEX verification tools
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

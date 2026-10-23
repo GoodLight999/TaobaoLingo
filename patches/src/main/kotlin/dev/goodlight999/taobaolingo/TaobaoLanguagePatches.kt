@@ -158,7 +158,7 @@ val englishUiResourcesPatch = bytecodePatch(
 @Suppress("unused")
 val englishResourceStringsPatch = bytecodePatch(
     name = "TaobaoLingo: English resource strings",
-    description = "English string resources without mutating global locale or protocol language (experimental).",
+    description = "English ID-based and named string resources without modifying networking or regional locale (experimental).",
     default = false
 ) {
     compatibleWith(taobao)
@@ -188,24 +188,6 @@ val englishResourceStringsPatch = bytecodePatch(
                 :taobaolingo_original
             """.trimIndent()
         )
-    }
-}
-
-/**
- * Companion to the ID-based resource patch: Taobao also resolves 7 call sites
- * through Localization.r(name). Use an isolated English configuration for
- * this lookup, leaving global locale/network/region state unchanged.
- * A missing key falls back to Taobao's original implementation.
- * No additional DEX registers are required in version 10.66.30.
- */
-@Suppress("unused")
-val englishNamedResourceStringsPatch = bytecodePatch(
-    name = "TaobaoLingo: English named resource strings",
-    description = "Enable English resources for named string lookups without changing regional/network locale.",
-    default = false
-) {
-    compatibleWith(taobao)
-    execute {
         NamedStringLookup.method.addInstructions(
             0,
             """
@@ -239,3 +221,4 @@ val englishNamedResourceStringsPatch = bytecodePatch(
         )
     }
 }
+

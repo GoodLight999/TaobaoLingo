@@ -33,6 +33,22 @@ public final class VerifyDinamicXNativeLabels {
         if(i instanceof FiveRegisterInstruction r)
             s.append(" D=").append(r.getRegisterD()).append(" E=").append(r.getRegisterE());
         if(i instanceof WideLiteralInstruction l) s.append(" VALUE=").append(l.getWideLiteral());
+        // Without these fields, modifying a const/4, branch or invoke-range
+        // could be invisible to the old checksum despite changing behavior.
+        if(i instanceof NarrowLiteralInstruction l) s.append(" NARROW=").append(l.getNarrowLiteral());
+        if(i instanceof OffsetInstruction o) s.append(" OFFSET=").append(o.getCodeOffset());
+        if(i instanceof RegisterRangeInstruction r)
+            s.append(" START=").append(r.getStartRegister()).append(" COUNT=").append(r.getRegisterCount());
+        if(i instanceof ArrayPayload a)
+            s.append(" ELEMENT_WIDTH=").append(a.getElementWidth()).append(" ELEMENTS=").append(a.getArrayElements());
+        if(i instanceof PackedSwitchPayload p) {
+            s.append(" SWITCH=");
+            for(SwitchElement e:p.getSwitchElements())s.append(e.getKey()).append(":").append(e.getOffset()).append(",");
+        }
+        if(i instanceof SparseSwitchPayload p) {
+            s.append(" SWITCH=");
+            for(SwitchElement e:p.getSwitchElements())s.append(e.getKey()).append(":").append(e.getOffset()).append(",");
+        }
         return s.toString();
     }
     private static Map<String,Code> methods(ZipFile zip) throws Exception {

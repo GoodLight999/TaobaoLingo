@@ -2,7 +2,7 @@
 
 ## Real-device evidence
 
-- The original **Force English UI** patch caused a black home screen, unresponsive Account tab and an English network error at login, despite rendering the bottom navigation in English.
+- The original **Force English UI** patch caused a black home screen, unresponsive Account tab and an English network error at login, with some English bottom-navigation labels in a screenshot, **without an unpatched baseline comparison**. The user subsequently confirmed **zero actual UI localization**; English error/recovery messages and the Terms `Agree` button already exist in the original app.
 - The cause has **not** been isolated conclusively. Forcing network/edition locale and re-signing are independent suspects.
 
 ## Offline investigation
@@ -23,4 +23,4 @@ In Taobao 10.66.30, `LocalizationManager.i(Context, Language)` updates `android.
 2. **Only if zero-patch control works**, install the UI-resources-only APK. Compare UI and network behavior. If network recovers but most dynamic Chinese text remains, a more surgical presentation-layer translation mechanism is needed.
 3. Do not re-enable the old global locale patch; it is a confirmed regression.
 
-**There is no verified working English translation yet.** Neither APK has been runtime-tested as of this report. Do not commit or redistribute Taobao proprietary APKs.
+**User correction (2026-10-23): no UI translation is verified at all; do not infer translation from English errors, Agree, or bottom navigation without unpatched baseline comparison. There is no verified working English translation yet.** Neither APK has been runtime-tested as of this report. Do not commit or redistribute Taobao proprietary APKs.

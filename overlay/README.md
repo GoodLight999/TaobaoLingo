@@ -1,6 +1,6 @@
 # TaobaoLingo Overlay — original APK, no re-signing
 
-An independent Android companion implementing screen OCR and on-device Chinese→Japanese/English translation. **Experimental: built by CI, not yet tested on a device.** This is a fallback if Taobao rejects the signing certificate of any Morphe-patched APK.
+An independent Android companion implementing screen OCR and on-device Chinese→Japanese/English translation. **Experimental: Android 15 x86_64 emulator startup and Chinese OCR tests pass; the full live translation overlay and original Taobao integration remain unverified.** This is a fallback if Taobao rejects the signing certificate of any Morphe-patched APK.
 
 - Uses Android MediaProjection (explicit screen-sharing consent) and the `SYSTEM_ALERT_WINDOW` overlay permission.
 - Bundles Google's ML Kit Chinese OCR model. ML Kit translation language models are downloaded once, and text is subsequently translated on-device.
@@ -26,6 +26,6 @@ From `overlay/`, with JDK17/Android SDK 35/Gradle 8.11.1:
 gradle :app:assembleDebug
 ```
 
-The [GitHub Actions build](../.github/workflows/overlay.yml) produces an APK artifact under `app/build/outputs/apk/debug/`.
+The [GitHub Actions build](../.github/workflows/overlay.yml) compiles the app, instrumentation tests, runs Android Lint, and produces an APK artifact under `app/build/outputs/apk/debug/`. An [Android 15 emulator smoke test](../.github/workflows/overlay-smoke.yml) has validated install, activity launch, UI layout, and bundled ML Kit Chinese OCR. The separate Chinese→Japanese model-download/translation test is being added; see [runtime verification](../analysis/android_emulator_validation.md).
 
 Unlike the Morphe patch, this APK is a **separate helper app** installed alongside the genuine Taobao. Screen sharing will show an OS confirmation; overlays may be disabled by a protected app view. This tool does not alter Taobao's network stack or signature.

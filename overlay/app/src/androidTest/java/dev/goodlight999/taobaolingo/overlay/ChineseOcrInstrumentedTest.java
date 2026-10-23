@@ -5,6 +5,10 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import com.google.mlkit.vision.common.InputImage;
+import com.google.mlkit.nl.translate.TranslateLanguage;
+import com.google.mlkit.nl.translate.Translation;
+import com.google.mlkit.nl.translate.TranslatorOptions;
+import com.google.android.gms.tasks.Tasks;
 import com.google.mlkit.vision.text.TextRecognition;
 import com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions;
 import org.junit.Test;
@@ -18,6 +22,24 @@ import static org.junit.Assert.*;
 /** Standalone bundled Chinese OCR recognition test: no network or Taobao account needed. */
 @RunWith(AndroidJUnit4.class)
 public final class ChineseOcrInstrumentedTest {
+    @Test public void translatesChineseToJapaneseOnDevice() throws Exception {
+        var translator = Translation.getClient(new TranslatorOptions.Builder()
+            .setSourceLanguage(TranslateLanguage.CHINESE)
+            .setTargetLanguage(TranslateLanguage.JAPANESE)
+            .build());
+        try {
+            // This integration test verifies network model acquisition and
+            // then performs translation locally, not against Taobao's servers.
+            Tasks.await(translator.downloadModelIfNeeded(), 180, TimeUnit.SECONDS);
+            String output = Tasks.await(translator.translate("搜索商品"), 40, TimeUnit.SECONDS);
+            assertNotNull("Translation returned null", output);
+            assertFalse("Translation is empty", output.trim().isEmpty());
+            assertNotEquals("Text remained untranslated", "搜索商品", output.trim());
+        } finally {
+            translator.close();
+        }
+    }
+
     @Test public void readsSyntheticChineseProductText() throws Exception {
         Bitmap frame = Bitmap.createBitmap(800, 220, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(frame);

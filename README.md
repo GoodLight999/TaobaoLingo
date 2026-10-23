@@ -2,7 +2,7 @@
 
 [Morphe](https://github.com/MorpheApp/morphe-patcher) patch for Taobao's existing **English** Android string resources. Developed against **com.taobao.taobao 10.66.30** (ARM64). Independent of Taobao and Morphe.
 
-> **Experimental — app runtime not yet verified.** The earlier global Force English UI patch produced English navigation but a black home, non-responsive Account and login/network errors on a physical device. That broken patch and the international-edition flag overrides have been **removed from the published patch source**. Their code remains in Git history only.
+> **Unverified and broken on device.** The user confirms **no UI English localization has been demonstrated**. English error/recovery pages and the Terms `Agree` button were already in English before patching. Earlier descriptions of English navigation or errors as proof of localization were incorrect. On-device tests also encountered black home content, broken Account navigation, and login problems. That broken patch and the international-edition flag overrides have been **removed from the published patch source**. Their code remains in Git history only.
 
 ## Patch in this repository
 

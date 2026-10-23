@@ -29,3 +29,20 @@ A separate Chinese-to-Japanese ML Kit download-and-inference instrumentation tes
 The Android Emulator latest SDK package download was corrupt in CI. Fixed emulator build 36.6.11 (SHA-256: `1eade4cf2df6ea8eeead4902c635897ba12aaa32aac4389eaae0fdb498a5b830`) was downloaded, and OS libraries installed. The Android-35 system image lacked device metadata expected by `avdmanager`, so the successful workflow created valid AVD metadata (`config.ini`, `.ini`) directly before booting.
 
 The test is reproducible using [`.github/workflows/overlay-smoke.yml`](../.github/workflows/overlay-smoke.yml).
+
+
+## Chinese-to-Japanese translation verification (2026-10-23 JST)
+
+[Android emulator run 39879605013](https://github.com/GoodLight999/TaobaoLingo/actions/runs/39879605013), commit `cd5516ee74faa6ef06eb33339810f07bb3c4f759`, **succeeded**.
+
+ML Kit instrumentation output:
+
+```text
+dev.goodlight999.taobaolingo.overlay.ChineseOcrInstrumentedTest:..
+Time: 44.511
+OK (2 tests)
+PASS: APK installed, activity rendered, process alive,
+      Chinese OCR and on-device translation succeeded
+```
+
+The second test downloaded the ML Kit Chinese→Japanese model on the Android 15 emulator, translated Chinese product-search text, and asserted nonempty, changed output. This validates the OCR and translation engines independently of Taobao. The test still does **not** prove MediaProjection capture or position-aligned overlays over the actual Taobao app, which are being tested separately.

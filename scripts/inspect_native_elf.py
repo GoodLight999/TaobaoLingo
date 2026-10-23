@@ -17,8 +17,8 @@ import sys
 import tempfile
 from zipfile import ZipFile
 
-NEEDED = re.compile(r"\\(NEEDED\\).*?\\[(.*?)\\]")
-JNI = re.compile(r"\\b(?:JNI_OnLoad|JNI_OnUnload|Java_[A-Za-z0-9_$]+)\\b")
+NEEDED = re.compile(r"\(NEEDED\).*?\[(.*?)\]")
+JNI = re.compile(r"\b(?:JNI_OnLoad|JNI_OnUnload|Java_[A-Za-z0-9_$]+)\b")
 # Presence of these literals is a navigation clue, never an anti-tamper finding.
 MARKERS = (
     b"DinamicX", b"DXWidgetNode", b"getApkPublicKeyDigest",
@@ -39,7 +39,7 @@ def analyze_library(data: bytes, *, symbols: bool = True) -> dict:
     sha256 = hashlib.sha256(data).hexdigest()
     result = {"sha256": sha256, "size": len(data),
               "markers": [v.decode("ascii") for v in MARKERS if v in data]}
-    if not data.startswith(b"\\x7fELF"):
+    if not data.startswith(b"\x7fELF"):
         result["error"] = "No ELF magic"
         return result
     with tempfile.TemporaryDirectory(prefix="taobaolingo-elf-") as temp:
@@ -49,7 +49,7 @@ def analyze_library(data: bytes, *, symbols: bool = True) -> dict:
             dynamic = command_readelf(so, "-d")
             result["needed"] = sorted(set(NEEDED.findall(dynamic)))
             result["soname"] = sorted(set(re.findall(
-                r"\\(SONAME\\).*?\\[(.*?)\\]", dynamic)))
+                r"\(SONAME\).*?\[(.*?)\]", dynamic)))
             if symbols:
                 table = command_readelf(so, "--dyn-syms")
                 result["jni_exports"] = sorted(set(JNI.findall(table)))

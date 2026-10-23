@@ -10,6 +10,10 @@ import app.morphe.patcher.patch.ApkFileType
 import app.morphe.patcher.patch.AppTarget
 import app.morphe.patcher.patch.Compatibility
 import app.morphe.patcher.patch.bytecodePatch
+import app.morphe.patcher.patch.PatchException
+import com.android.tools.smali.dexlib2.Opcode
+import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
+import com.android.tools.smali.dexlib2.iface.instruction.WideLiteralInstruction
 
 /**
  * These concrete widget classes were located by references to
@@ -215,6 +219,37 @@ val englishDinamicXUiLabelsPatch = bytecodePatch(
 ) {
     compatibleWith(dinamicXCompatibility)
     execute {
+        // Fail closed if any bytecode entry point no longer writes the precise
+        // DinamicX native text field. This protects against obfuscation changes.
+        val pairs = listOf(
+            StandardDxTextSetter.method to "Ltb/gi6;->text:Ljava/lang/CharSequence;",
+            FastDxTextSetter.method to "Ltb/cx5;->text:Ljava/lang/CharSequence;",
+            StandardDxTextAttribute.method to "Ltb/gi6;->text:Ljava/lang/CharSequence;",
+            FastDxTextAttribute.method to "Ltb/cx5;->text:Ljava/lang/CharSequence;"
+        )
+        for ((method, expectedField) in pairs) {
+            val impl = method.implementation
+                ?: throw PatchException("Missing DinamicX text method implementation")
+            val writesText = impl.instructions.any {
+                it.opcode == Opcode.IPUT_OBJECT &&
+                    (it as? ReferenceInstruction)?.reference?.toString() == expectedField
+            }
+            if (!writesText) {
+                throw PatchException("Expected DinamicX text field assignment: $expectedField")
+            }
+        }
+        for (method in listOf(
+            StandardDxTextAttribute.method,
+            FastDxTextAttribute.method
+        )) {
+            val textAttributeId = method.implementation?.instructions?.any {
+                it.opcode == Opcode.CONST_WIDE &&
+                    (it as? WideLiteralInstruction)?.wideLiteral == 38178040921L
+            } == true
+            if (!textAttributeId) {
+                throw PatchException("Expected DinamicX TEXT attribute hash 38178040921")
+            }
+        }
         val fromDirectSetter = nativeLabelInstructions()
         val fromTemplateAttribute = nativeLabelInstructions(
             valueRegister = "p3", textAttributeGate = true

@@ -31,3 +31,45 @@ adb shell uiautomator dump /sdcard/taobaolingo-projection.xml || true
 adb pull /sdcard/taobaolingo-projection.xml "$dir/taobaolingo-projection.xml" || true
 adb exec-out screencap -p > "$dir/taobaolingo-projection.png" || true
 echo 'Captured the Android MediaProjection consent UI for automated test development.'
+cat > "$dir/tap_dialog_node.py" <<'PY'
+import re
+import subprocess
+import sys
+import xml.etree.ElementTree as ET
+root = ET.parse(sys.argv[1]).getroot()
+target = sys.argv[2]
+candidates = []
+for node in root.iter('node'):
+    text = node.attrib.get('text', '')
+    if text == target:
+        values = [int(v) for v in re.findall(r'\d+', node.attrib.get('bounds', ''))]
+        if len(values) == 4:
+            candidates.append(((values[0] + values[2]) // 2,
+                               (values[1] + values[3]) // 2))
+if len(candidates) != 1:
+    raise SystemExit(f'Expected one node {target!r}, got {len(candidates)}')
+subprocess.run(['adb','shell','input','tap',str(candidates[0][0]),str(candidates[0][1])],
+               check=True)
+PY
+python3 "$dir/tap_dialog_node.py" "$dir/taobaolingo-projection.xml" 'A single app'
+sleep 1
+adb shell uiautomator dump /sdcard/taobaolingo-projection-choice.xml >/dev/null
+adb pull /sdcard/taobaolingo-projection-choice.xml "$dir/taobaolingo-projection-choice.xml" >/dev/null
+python3 "$dir/tap_dialog_node.py" "$dir/taobaolingo-projection-choice.xml" 'Entire screen'
+sleep 1
+adb shell uiautomator dump /sdcard/taobaolingo-projection-ready.xml >/dev/null
+adb pull /sdcard/taobaolingo-projection-ready.xml "$dir/taobaolingo-projection-ready.xml" >/dev/null
+python3 "$dir/tap_dialog_node.py" "$dir/taobaolingo-projection-ready.xml" 'Start'
+sleep 12
+adb shell dumpsys activity services > "$dir/taobaolingo-services.txt"
+adb shell dumpsys notification > "$dir/taobaolingo-notifications.txt"
+adb logcat -d -v brief -t 1800 > "$dir/taobaolingo-logcat.txt"
+adb exec-out screencap -p > "$dir/taobaolingo-post-consent.png"
+grep -q 'dev.goodlight999.taobaolingo.overlay.CaptureService' "$dir/taobaolingo-services.txt" \
+  || { echo 'CaptureService did not remain running'; exit 1; }
+if grep -A4 'Process: dev.goodlight999.taobaolingo.overlay' "$dir/taobaolingo-logcat.txt" | grep -q 'FATAL EXCEPTION'; then
+  echo 'App process fatal exception detected'
+  exit 1
+fi
+echo 'PASS: MediaProjection permission granted and CaptureService running'
+

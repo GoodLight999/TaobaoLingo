@@ -11,8 +11,8 @@ import app.morphe.patcher.patch.AppTarget
 import app.morphe.patcher.patch.Compatibility
 import app.morphe.patcher.patch.bytecodePatch
 
-private const val SITE_MODEL = "$SITE_MODEL"
-private const val LANG_MODEL = "$LANG_MODEL"
+private const val SITE_MODEL = "Lcom/taobao/android/editionswitcher/boarding/LocaleModel\$SiteLangModel;"
+private const val LANG_MODEL = "Lcom/taobao/android/editionswitcher/boarding/LocaleModel\$LangModel;"
 
 private val editionCompatibility = Compatibility(
     name = "Taobao",

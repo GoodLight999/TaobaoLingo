@@ -44,6 +44,7 @@ public final class AnalyzeDinamicXRoutes {
                               Set<String> textFieldsWritten, boolean hasTextHash,
                               Set<String> methodCalls) {}
     private static final Map<String, TargetInfo> targetData = new HashMap<>();
+    private static final Map<String, String> superclassByType = new HashMap<>();
     private static final Map<String, Set<String>> directCallers = new HashMap<>();
     private static final Map<String, Set<String>> virtualDispatchReferences = new HashMap<>();
     private static final Set<String> external = new TreeSet<>();
@@ -68,6 +69,7 @@ public final class AnalyzeDinamicXRoutes {
                 Opcodes.getDefault(), new BufferedInputStream(apk.getInputStream(entry)));
             for (ClassDef cls : dex.getClasses()) {
                 String type = cls.getType();
+                superclassByType.put(type, cls.getSuperclass());
                 for (Method method : cls.getMethods()) {
                     MethodImplementation impl = method.getImplementation();
                     if (impl == null) continue;
@@ -114,9 +116,30 @@ public final class AnalyzeDinamicXRoutes {
         }
     }
 
+    private static Set<String> targetLineage() {
+        Set<String> ancestorTypes = new TreeSet<>();
+        for (String type : List.of(DX_BUTTER, DX_FAST)) {
+            Set<String> seen = new HashSet<>();
+            while (type != null && seen.add(type)) {
+                ancestorTypes.add(type);
+                type = superclassByType.get(type);
+            }
+        }
+        return ancestorTypes;
+    }
+
+    private static boolean mayDispatchToTarget(String methodRef) {
+        int index = methodRef.indexOf("->");
+        return index > 0 &&
+               targetLineage().contains(methodRef.substring(0, index)) &&
+               (methodRef.endsWith(SETTER) || methodRef.endsWith(ATTRIBUTE));
+    }
+
     private static void secondPass(ZipFile apk) throws IOException {
         Set<String> sought = new HashSet<>();
         for (Set<String> callers : directCallers.values()) sought.addAll(callers);
+        for (var entry : virtualDispatchReferences.entrySet())
+            if (mayDispatchToTarget(entry.getKey())) sought.addAll(entry.getValue());
         if (sought.isEmpty()) return;
         for (ZipEntry entry : Collections.list(apk.entries())) {
             if (!entry.getName().matches("classes(\\d*)\\.dex")) continue;
@@ -167,10 +190,12 @@ public final class AnalyzeDinamicXRoutes {
             for (String caller : callers) out.println("  - " + caller);
             out.println();
         }
-        out.println("## Virtual dispatch and superclass call-site candidates");
-        out.println("These are references to methods with the same name/signature, "
-                    + "not necessarily to either target implementation.");
+        out.println("## Virtual dispatch via a target superclass");
+        out.println("Target class lineage: " + targetLineage());
+        out.println("Calls on the base class may dispatch to the target override "
+                    + "depending on the receiver's concrete type.");
         for (var entry : new java.util.TreeMap<>(virtualDispatchReferences).entrySet()) {
+            if (!mayDispatchToTarget(entry.getKey())) continue;
             out.println("- " + entry.getKey() + " (" + entry.getValue().size() + " callers)");
             for (String caller : entry.getValue())
                 out.println("  - " + caller);

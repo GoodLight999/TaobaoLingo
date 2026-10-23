@@ -59,7 +59,8 @@ jobs:
               manifest = jar.read("META-INF/MANIFEST.MF").decode()
               assert "Patcher-Version: 2.0.0" in manifest, manifest
               assert any("TaobaoLanguagePatchesKt.class" in n for n in names)
-              assert any("JapanEnglishServerPatchKt.class" in n for n in names)\n              assert any("DinamicXEnglishLabelsPatchKt.class" in n for n in names)
+              assert any("JapanEnglishServerPatchKt.class" in n for n in names)
+              assert any("DinamicXEnglishLabelsPatchKt.class" in n for n in names)
               assert any("JapanEnglishPickerPatchKt.class" in n for n in names)
           print("Verified Morphe 2.0.0 bundle:", bundles[0])
           PY

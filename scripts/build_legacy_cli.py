@@ -38,8 +38,8 @@ def adapt(source: str, name: str) -> str:
             "isStatic = false", "accessFlags = listOf(AccessFlags.PUBLIC)",
         )
     if name == "DinamicXEnglishLabelsPatch.kt":
-        if source.count("isStatic = false") != 2 or "isStatic = true" in source:
-            raise ValueError("Expected two DinamicX instance setText fingerprints")
+        if source.count("isStatic = false") != 4 or "isStatic = true" in source:
+            raise ValueError("Expected four DinamicX setter + text attribute fingerprints")
         return source.replace(IMPORT, FLAGS_IMPORT, 1).replace(
             "isStatic = false", "accessFlags = listOf(AccessFlags.PUBLIC)",
         )

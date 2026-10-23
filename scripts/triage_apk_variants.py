@@ -146,7 +146,7 @@ def render_markdown(report: dict) -> str:
         sig = value["signature_check"]
         state = ("not checked" if not sig["available"] else
                  "PASS" if sig["valid"] else "FAIL")
-        lines.append(f"| {name} | \`{value['apk_sha256']}\` | {value['file_count']} | {state} |")
+        lines.append(f"| {name} | `{value['apk_sha256']}` | {value['file_count']} | {state} |")
     for label, value in report["comparisons"].items():
         lines.extend(["", f"## {label}", "",
                       f"Changed: {len(value['changed'])}; added: {len(value['added'])}; "
@@ -157,7 +157,7 @@ def render_markdown(report: dict) -> str:
             lines.append(f"| {kind} | {count} |")
         lines += ["", "### Non-signature member differences", ""]
         if value["non_signature_changes"]:
-            lines += [f"- \`{x}\`" for x in value["non_signature_changes"]]
+            lines += [f"- `{x}`" for x in value["non_signature_changes"]]
         else:
             lines.append("None.")
     lines += ["", "## Interpretation limits", "",

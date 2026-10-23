@@ -130,6 +130,7 @@ jobs:
             | tee "$RUNNER_TEMP/ocr-test.log"
           grep -q 'OK (2 tests)' "$RUNNER_TEMP/ocr-test.log"
           echo 'PASS: APK installed, activity rendered, process alive, Chinese OCR and on-device translation succeeded'
+          bash overlay/scripts/probe_media_projection.sh
 
       - name: Upload emulator screenshots and diagnostic logs
         if: always()
@@ -141,4 +142,7 @@ jobs:
             ${{ runner.temp }}/window.xml
             ${{ runner.temp }}/emulator.log
             ${{ runner.temp }}/ocr-test.log
+            ${{ runner.temp }}/taobaolingo-projection.xml
+            ${{ runner.temp }}/taobaolingo-projection.png
+            ${{ runner.temp }}/taobaolingo-main.xml
           if-no-files-found: ignore

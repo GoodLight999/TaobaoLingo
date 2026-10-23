@@ -66,7 +66,7 @@ jobs:
           PY
       - name: Run independent APK triage regression fixtures
         run: |
-          python3 -m py_compile scripts/triage_apk_variants.py scripts/inspect_native_elf.py tests/test_triage_apk_variants.py tests/test_inspect_native_elf.py
+          python3 -m py_compile scripts/triage_apk_variants.py scripts/inspect_native_elf.py scripts/inspect_mytaobao_templates.py tests/test_triage_apk_variants.py tests/test_inspect_native_elf.py tests/test_inspect_mytaobao_templates.py
           bash -n scripts/run_apk_matrix.sh
           python3 -m unittest discover -s tests -p 'test_*.py' -v
       - name: Compile independent DEX verification tools

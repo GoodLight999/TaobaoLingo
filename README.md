@@ -71,6 +71,22 @@ Details: [latest binary verification](analysis/two_string_resource_validation.md
 
 Morphe's official [Root mount](https://github.com/MorpheApp/morphe-manager/blob/main/docs/installers.md) avoids installing a re-signed APK, keeping the original app installed under its original package identity, but requires a rooted phone; ordinary installation does not have this property. No assumption is made that your phone is rooted.
 
+## Executed Android native text fixture (not Taobao)
+
+The real Morphe Patcher 2.0 DinamicX patch has now been **applied to a
+synthetic Android 15 test APK and executed successfully**, rather than
+only inspected as DEX. The [passing emulator CI run](https://github.com/GoodLight999/TaobaoLingo/actions/runs/39945857529)
+confirms English output through both `setText` and the DinamicX TEXT-attribute
+methods, including `SpannableString` inputs. It also checks negative controls
+to avoid translation of non-text properties or unmatched labels. Full results
+and evidence are in [the native runtime verification report](analysis/native_fixture_runtime_verified.md).
+
+**This is a controlled fixture, not Taobao itself.** Real Taobao UI English
+localization, Account navigation, login and anti-tamper compatibility
+remain unresolved and are not implied by this result. Use Morphe Desktop
+**1.19.0 stable** for the Patcher 2.0 desktop fixture test; dev.4 exhibited
+a constructor ABI mismatch.
+
 ## Binary-difference diagnostics (native app only)
 
 The reproducible [APK triage protocol](analysis/apk_triage_protocol.md) separates the

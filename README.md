@@ -87,6 +87,29 @@ remain unresolved and are not implied by this result. Use Morphe Desktop
 **1.19.0 stable** for the Patcher 2.0 desktop fixture test; dev.4 exhibited
 a constructor ABI mismatch.
 
+## Real Taobao APK: verified patch/control builds (2026-10-23)
+
+The exact user-supplied Taobao 10.66.30 ARM64 APK was **successfully rebuilt**
+with the actual production Morphe 2.0 DinamicX patch in `STRIP_SAFE` mode.
+A separate Morphe **zero-patch control** was also rebuilt from the same
+original, then both APKs were signed with the **same** diagnostic identity.
+
+Android SDK `apksigner` verified each APK (v1/v2/v3). Independent method
+comparison over all **595,518 implemented methods** found **exactly four**
+modified methods for the DinamicX native-label patch. The zero-patch
+control retains all original app code/resources unchanged. See the
+[completed real-APK forensic matrix](analysis/real_apk_patch_matrix_verified_20261023.md)
+and [one-command offline reproduction script](scripts/reproduce_real_apk_safe.sh).
+
+`FULL` rebuilding was also tested but failed the four-method-only invariant:
+**1,183 method representations differed**, so `STRIP_SAFE` remains the
+recommended experimental format.
+
+**No actual Taobao user-visible English localization, working Account tab
+or login has yet been demonstrated.** Binary correctness alone cannot
+establish runtime behavior or server acceptance of a different signer.
+Real Taobao APKs and diagnostic signing keys are never published here.
+
 ## Binary-difference diagnostics (native app only)
 
 The reproducible [APK triage protocol](analysis/apk_triage_protocol.md) separates the

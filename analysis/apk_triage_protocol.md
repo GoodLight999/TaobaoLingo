@@ -53,12 +53,14 @@ were English before localization and are **not** translation evidence.
 - `scripts/run_apk_matrix.sh` automates a reproducible four-variant
   Morphe Desktop run, offline checks and report generation against the
   exact-hash original APK. All variants use the same *disposable* test
-  signing certificate (which is **not** the official Taobao signer).
+  signing certificate (which is **not** the official Taobao signer). The
+  Morphe CLI builds unsigned outputs which are then signed with `apksigner`
+  to avoid a reproduced PKCS12-to-BKS signing alias error.
 
 ## Reproduction on a host with the exact original APK
 
 Requirements: JDK 21, Morphe Desktop 1.18.1 all-in-one JAR, `kotlinc`,
-Python 3, `keytool`, `readelf`; `apksigner` is optional but recommended.
+Python 3, `keytool`, `readelf` and `apksigner`.
 
 ```sh
 bash scripts/run_apk_matrix.sh \
@@ -106,6 +108,16 @@ A real Taobao 10.66.30 ARM64 APK has not been booted in this new CI.
 The prior successful x86_64 emulator experiments only tested a *different*
 helper/overlay application and are not evidence for native Taobao localization.
 OCR and overlays are outside the scope of this investigation.
+
+## Android native fixture verification
+
+[The independent native-fixture runtime test](native_fixture_runtime_verified.md)
+**passed on Android 15**, covering both setter and template TEXT-attribute
+hooks, direct String and SpannableString values, and negative controls.
+This was performed with the actual Morphe 2.0 patch source against a
+deliberately synthetic fixture, *not* the proprietary ARM64 Taobao APK.
+It proves Android runtime execution of injected code, but **not** actual
+Taobao UI translation, Account navigation or login functionality.
 
 ## Test and evidence policy
 

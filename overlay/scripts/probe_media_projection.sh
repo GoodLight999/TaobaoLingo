@@ -62,11 +62,14 @@ adb pull /sdcard/taobaolingo-projection-ready.xml "$dir/taobaolingo-projection-r
 python3 "$dir/tap_dialog_node.py" "$dir/taobaolingo-projection-ready.xml" 'Start'
 sleep 12
 adb shell dumpsys activity services > "$dir/taobaolingo-services.txt"
+adb shell dumpsys display > "$dir/taobaolingo-display.txt"
 adb shell dumpsys notification > "$dir/taobaolingo-notifications.txt"
 adb logcat -d -v brief -t 1800 > "$dir/taobaolingo-logcat.txt"
 adb exec-out screencap -p > "$dir/taobaolingo-post-consent.png"
-grep -q 'dev.goodlight999.taobaolingo.overlay.CaptureService' "$dir/taobaolingo-services.txt" \
+grep -Fq 'dev.goodlight999.taobaolingo.overlay/.CaptureService' "$dir/taobaolingo-services.txt" \
   || { echo 'CaptureService did not remain running'; exit 1; }
+grep -Fq 'TaobaoLingoOverlay' "$dir/taobaolingo-display.txt" \
+  || { echo 'Virtual display was not created'; exit 1; }
 if grep -A4 'Process: dev.goodlight999.taobaolingo.overlay' "$dir/taobaolingo-logcat.txt" | grep -q 'FATAL EXCEPTION'; then
   echo 'App process fatal exception detected'
   exit 1

@@ -145,4 +145,10 @@ jobs:
             ${{ runner.temp }}/taobaolingo-projection.xml
             ${{ runner.temp }}/taobaolingo-projection.png
             ${{ runner.temp }}/taobaolingo-main.xml
+            ${{ runner.temp }}/taobaolingo-projection-choice.xml
+            ${{ runner.temp }}/taobaolingo-projection-ready.xml
+            ${{ runner.temp }}/taobaolingo-post-consent.png
+            ${{ runner.temp }}/taobaolingo-services.txt
+            ${{ runner.temp }}/taobaolingo-notifications.txt
+            ${{ runner.temp }}/taobaolingo-logcat.txt
           if-no-files-found: ignore

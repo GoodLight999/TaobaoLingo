@@ -44,7 +44,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p "$RUNNER_TEMP/desktop"
-          gh release download v1.19.0-dev.4 --repo MorpheApp/morphe-desktop \
+          gh release download v1.19.0 --repo MorpheApp/morphe-desktop \
             --pattern '*-all.jar' --dir "$RUNNER_TEMP/desktop"
           find "$RUNNER_TEMP/desktop" -name '*-all.jar' -size +1M
       - name: Patch the fixture and independently inspect four DEX methods

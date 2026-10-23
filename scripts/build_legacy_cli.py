@@ -13,23 +13,17 @@ import zipfile
 SOURCE = Path(__file__).resolve().parents[1] / 'patches/src/main/kotlin/dev/goodlight999/taobaolingo/TaobaoLanguagePatches.kt'
 
 def adapt(source):
-    if source.count('isStatic = true') != 5 or source.count('isStatic = false') != 2:
-        raise ValueError('Expected seven fingerprints; review source before regenerating')
-    source = source.replace('import app.morphe.patcher.Fingerprint',
-                            'import com.android.tools.smali.dexlib2.AccessFlags\nimport app.morphe.patcher.Fingerprint', 1)
-    source = source.replace('isStatic = true',
-                            'accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.STATIC, AccessFlags.FINAL)', 1)
-    source = source.replace('isStatic = false',
-                            'accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL)', 2)
-    source = source.replace('isStatic = true',
-                            'accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.STATIC, AccessFlags.FINAL)', 1)
-    source = source.replace('isStatic = true',
-                            'accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.STATIC, AccessFlags.FINAL)', 1)
-    source = source.replace('isStatic = true',
-                            'accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.STATIC, AccessFlags.FINAL)', 1)
-    source = source.replace('isStatic = true',
-                            'accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.STATIC)', 1)
-    return source
+    if source.count('isStatic = true') != 2 or 'isStatic = false' in source:
+        raise ValueError('Expected only two static string-lookup fingerprints')
+    source = source.replace(
+        'import app.morphe.patcher.Fingerprint',
+        'import com.android.tools.smali.dexlib2.AccessFlags\nimport app.morphe.patcher.Fingerprint',
+        1
+    )
+    return source.replace(
+        'isStatic = true',
+        'accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.STATIC, AccessFlags.FINAL)'
+    )
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)

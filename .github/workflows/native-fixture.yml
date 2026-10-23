@@ -51,6 +51,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          export PATH="$JAVA_HOME/bin:$PATH"
+          "$JAVA_HOME/bin/java" -version
           export DESKTOP_JAR="$(find "$RUNNER_TEMP/desktop" -name '*-all.jar' -print -quit)"
           export MPP="$(find patches/build/libs -name '*.mpp' -print -quit)"
           export CONTROL="fixture/app/build/outputs/apk/debug/app-debug.apk"
@@ -58,7 +60,7 @@ jobs:
           test -s "$DESKTOP_JAR"
           test -s "$MPP"
           test -s "$CONTROL"
-          java -jar "$DESKTOP_JAR" patch "$CONTROL" \
+          "$JAVA_HOME/bin/java" -jar "$DESKTOP_JAR" patch "$CONTROL" \
             --bytecode-mode=STRIP_SAFE --exclusive "-p=$MPP" \
             '-e=TaobaoLingo: Native DinamicX English labels (experimental)' \
             "-o=$PATCHED" | tee "$RUNNER_TEMP/patch.log"

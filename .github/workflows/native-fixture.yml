@@ -60,20 +60,23 @@ jobs:
           test -s "$DESKTOP_JAR"
           test -s "$MPP"
           test -s "$CONTROL"
-          # Morphe CLI in fresh CI has no default keystore; create a one-run
-          # disposable identity. Never publish or reuse the private key.
-          "$JAVA_HOME/bin/keytool" -genkeypair -storetype PKCS12 \
-            -keystore "$RUNNER_TEMP/native-fixture-signing.p12" \
-            -storepass Morphe -keypass Morphe -alias Morphe \
-            -keyalg RSA -keysize 2048 -validity 1 \
-            -dname 'CN=NativeFixtureOnly' -noprompt
+          # Isolate patch assembly from Morphe's PKCS12->BKS signer bug.
+          # Sign with the existing Android Gradle debug certificate instead.
+          local_unsigned="$RUNNER_TEMP/fixture-native-unsigned.apk"
           "$JAVA_HOME/bin/java" -jar "$DESKTOP_JAR" patch "$CONTROL" \
-            --keystore="$RUNNER_TEMP/native-fixture-signing.p12" \
-            --keystore-password=Morphe --keystore-entry-alias=Morphe \
-            --keystore-entry-password=Morphe \
-            --bytecode-mode=STRIP_SAFE --exclusive "-p=$MPP" \
+            --unsigned --bytecode-mode=STRIP_SAFE --exclusive "-p=$MPP" \
             '-e=TaobaoLingo: Native DinamicX English labels (experimental)' \
-            "-o=$PATCHED" | tee "$RUNNER_TEMP/patch.log"
+            "-o=$local_unsigned" 2>&1 | tee "$RUNNER_TEMP/patch.log"
+          test -s "$local_unsigned"
+          test -s "$HOME/.android/debug.keystore"
+          apksigner_bin="$(find "$ANDROID_SDK_ROOT/build-tools" -name apksigner -type f | sort -V | tail -1)"
+          test -x "$apksigner_bin"
+          "$apksigner_bin" sign \
+            --ks "$HOME/.android/debug.keystore" \
+            --ks-pass pass:android --ks-key-alias androiddebugkey \
+            --key-pass pass:android \
+            --out "$PATCHED" "$local_unsigned"
+          "$apksigner_bin" verify --verbose "$PATCHED" | tee "$RUNNER_TEMP/sign-verify.log"
           test -s "$PATCHED"
           javac -cp "$DESKTOP_JAR" -d "$RUNNER_TEMP" \
             tests/VerifyDinamicXNativeLabels.java tests/AnalyzeDinamicXRoutes.java

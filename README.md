@@ -6,7 +6,7 @@
 
 ## Patch in this repository
 
-**TaobaoLingo: English resource strings** (disabled by default).
+**TaobaoLingo: English resource strings** (disabled by default; independent of the Japan selector experiments).
 
 The APK contains two string-localization entrypoints:
 - `Localization.q(int)` — referenced by **909** invoke instructions in the original APK.
@@ -15,6 +15,17 @@ The APK contains two string-localization entrypoints:
 Both are patched to read Android's bundled English resources from a **separate configuration context**. The patch does not change Taobao's global `Localization.h()` language value, `LocalizationManager.d()` locale getter, international-edition checks, user account settings or shopping-region preferences. No language is sent to an external translation service.
 
 **Scope:** native resources with an available English translation. Dynamic pages, server-rendered text, WebViews, product names, product images, and strings not included in the English resource table are **not** translated. Japanese UI is **not yet implemented**.
+
+## Experimental native Japan + English locale selector
+
+Taobao's bundled onboarding dataset defines 23 regions; **JP offers Chinese only** while SG has English. The patch set also now contains two **disabled-by-default** experiments:
+
+1. `TaobaoLingo: Show English in Japan locale picker (fallback)` — adds non-default English only to JP in `assets/boarding/data.json`.
+2. `TaobaoLingo: Enable English for Japan picker (experimental)` — adds English to JP in the **server-provided `countryInfo` list**, and to `currentCountryInfo` if currently JP. This patch declares a dependency on (1), but with Morphe CLI `--exclusive` **both names must be explicitly enabled**.
+
+Unlike the failed global locale patch, neither experiment changes protocol-facing `Localization.h()`. The server may still reject Japan + English, and the re-signed APK may still have login problems. **The experiments are not confirmed to work on a physical phone.**
+
+An actual Taobao 10.66.30 APK was rebuilt with both enabled: all 595,518 DEX methods were independently compared and **only the intended callback changed**. Only the JP onboarding JSON changed among non-DEX resources; the generated APK passes signature verification. See the [offline validation report](analysis/japan_server_list_validation.md) and `scripts/verify_japan_picker.py`.
 
 ## How to build
 

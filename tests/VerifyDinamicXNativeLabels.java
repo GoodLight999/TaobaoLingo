@@ -84,8 +84,10 @@ public final class VerifyDinamicXNativeLabels {
         try(var original=new ZipFile(args[0]);var candidate=new ZipFile(args[1])) {
             var before=methods(original);
             var after=methods(candidate);
-            check(before.size()==595518 && before.keySet().equals(after.keySet()),
-                "DEX method inventory changed");
+            final boolean fixture = Boolean.getBoolean("taobaolingo.fixture");
+            check(before.keySet().equals(after.keySet()) &&
+                  (fixture ? before.size() >= TARGETS.size() : before.size()==595518),
+                "DEX method inventory changed (fixture="+fixture+", total="+before.size()+")");
             Set<String> changed=new TreeSet<>();
             for(var e:before.entrySet())
                 if(e.getValue().checksum()!=after.get(e.getKey()).checksum())changed.add(e.getKey());
@@ -119,7 +121,7 @@ public final class VerifyDinamicXNativeLabels {
             check(sig.isVerified() && sig.isVerifiedUsingV2Scheme()
                     && sig.isVerifiedUsingV3Scheme(),"APK signature failed: "+sig.getErrors());
         }
-        System.out.println("PASS: 595,518 methods; only four native text binding methods changed");
+        System.out.println("PASS: only four native text binding methods changed; method inventory identical");
         System.out.println("PASS: original instructions intact; text attribute guard present");
         System.out.println("PASS: no unrelated APK resource changes");
         System.out.println("NOTE: static DEX validation does not prove Taobao actually displays English.");

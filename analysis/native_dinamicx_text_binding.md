@@ -54,3 +54,21 @@ Source: `patches/src/main/kotlin/dev/goodlight999/taobaolingo/DinamicXEnglishLab
 ## Still not resolved
 
 The modified APK's signing identity differs from Taobao's original signer. The earlier reported black screen, network/login issues and unresponsive `我的淘宝` are **not fixed or proven to be caused by any particular mechanism**. This text-binding-only patch may visibly translate some live DinamicX labels, but full English UI and functional login require real device validation. The next comparison must begin with an original-app Chinese label and confirm that the *same* label changes on the patched app, not assume that pre-existing English constitutes translation.
+
+
+## Full 108-label offline proof — signed APK
+
+The same four-hook smali generator was independently compiled for Morphe Desktop 1.18.1/Patcher 1.15.1 with **all 108 label pairs** (not just the earlier 8-label smoke). Patching the original Taobao 10.66.30 APK in `STRIP_SAFE` mode succeeded; the APK was reassembled and signed.
+
+An independent Java verifier parsed both APKs through dexlib2, independently comparing the instruction/reference/register representation of **595,518 methods**:
+
+- Exactly four mutated method instruction sequences: the two `setText(CharSequence)` and the two `onSetStringAttribute(long,String)` methods in `Ltb/gi6;` and `Ltb/cx5;`.
+- In each modified method, the original instruction sequence survives unmodified as a suffix.
+- Only the actual DinamicX text attribute (hash `38178040921`) may be rewritten in `onSetStringAttribute`; other string attributes remain on the original path.
+- The APK's non-DEX, non-signature payloads match the source by filename/size/CRC.
+- APK v2 and v3 signature verification passed.
+- Morphe patching result: **1 applied patch / 0 failures**.
+
+Signed proof APK SHA-256: `0382619ae0961590bffd322f63556341d014acc51d64038bd18eb0436d8e7f8a`.
+
+**Scope of proof:** method-level bytecode and signature validity, **not** actual Taobao UI rendering, account access or login. The proof was compiled against a legacy Desktop adapter with equivalent four-hook source instructions; the main released `.mpp` is separately built by Morphe Patcher 2.0 and has **not** been tested on a phone.

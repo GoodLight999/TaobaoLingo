@@ -44,6 +44,22 @@ private object FastDxTextSetter : Fingerprint(
     isStatic = false
 )
 
+private object StandardDxTextAttribute : Fingerprint(
+    definingClass = "Ltb/gi6;",
+    name = "onSetStringAttribute",
+    returnType = "V",
+    parameters = listOf("J", "Ljava/lang/String;"),
+    isStatic = false
+)
+
+private object FastDxTextAttribute : Fingerprint(
+    definingClass = "Ltb/cx5;",
+    name = "onSetStringAttribute",
+    returnType = "V",
+    parameters = listOf("J", "Ljava/lang/String;"),
+    isStatic = false
+)
+
 // Conservative exact-match UI terms derived from the original APK's
 // assets/mytaobao, assets/mtbsettings and assets/awesome snapshots.
 // DO NOT add product descriptions or dynamically generated seller text.
@@ -161,13 +177,24 @@ private val exactUiLabels = linkedMapOf(
 private fun smaliQuoted(s: String): String =
     "\"" + s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n") + "\""
 
-private fun nativeLabelInstructions(): String = buildString {
+private fun nativeLabelInstructions(
+    valueRegister: String = "p1",
+    textAttributeGate: Boolean = false
+): String = buildString {
+    if (textAttributeGate) {
+        // Only alter DinamicX TEXT attribute (hash 38178040921), not FONT.
+        // onSetStringAttribute(J,String): 7 registers, p1/p2 = attribute hash,
+        // p3 = text, v0/v1 = scratch wide, v2 = scratch cmp result.
+        appendLine("const-wide v0, 0x8e396ac59L")
+        appendLine("cmp-long v2, p1, v0")
+        appendLine("if-nez v2, :tl_end")
+    }
     exactUiLabels.entries.forEachIndexed { i, item ->
         appendLine("const-string v0, ${smaliQuoted(item.key)}")
-        appendLine("invoke-virtual {v0, p1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z")
+        appendLine("invoke-virtual {v0, $valueRegister}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z")
         appendLine("move-result v1")
         appendLine("if-eqz v1, :tl_next_$i")
-        appendLine("const-string p1, ${smaliQuoted(item.value)}")
+        appendLine("const-string $valueRegister, ${smaliQuoted(item.value)}")
         appendLine("goto/32 :tl_end")
         appendLine(":tl_next_$i")
     }
@@ -177,7 +204,7 @@ private fun nativeLabelInstructions(): String = buildString {
 /**
  * EXPERIMENTAL. Not proof of an English Taobao on device.
  * Does NOT trigger on pre-existing English error / repair / Agree screens.
- * Overrides only two localized view-layer methods, 0 global/network getters.
+ * Overrides only four localized view-layer methods, 0 global/network getters.
  * Fully opt-in until original-vs-patched UI and runtime stability are measured.
  */
 @Suppress("unused")
@@ -188,8 +215,13 @@ val englishDinamicXUiLabelsPatch = bytecodePatch(
 ) {
     compatibleWith(dinamicXCompatibility)
     execute {
-        val instructions = nativeLabelInstructions()
-        StandardDxTextSetter.method.addInstructions(0, instructions)
-        FastDxTextSetter.method.addInstructions(0, instructions)
+        val fromDirectSetter = nativeLabelInstructions()
+        val fromTemplateAttribute = nativeLabelInstructions(
+            valueRegister = "p3", textAttributeGate = true
+        )
+        StandardDxTextSetter.method.addInstructions(0, fromDirectSetter)
+        FastDxTextSetter.method.addInstructions(0, fromDirectSetter)
+        StandardDxTextAttribute.method.addInstructions(0, fromTemplateAttribute)
+        FastDxTextAttribute.method.addInstructions(0, fromTemplateAttribute)
     }
 }

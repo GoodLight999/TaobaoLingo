@@ -49,19 +49,42 @@ jobs:
         run: |
           set -euo pipefail
           sudo chmod 666 /dev/kvm
+          # Create AVD metadata directly. avdmanager currently fails to load
+          # devices.xml on the downloaded API 35 system image.
           image_dir="$ANDROID_SDK_ROOT/system-images/android-35/google_apis/x86_64"
-          # Legacy avdmanager requires devices.xml even though current Android images may omit it.
-          if [ ! -s "$image_dir/devices.xml" ]; then
-            cat > "$image_dir/devices.xml" <<'XML'
-          <?xml version="1.0" encoding="UTF-8"?>
-          <d:devices xmlns:d="http://schemas.android.com/sdk/devices/7"
-                     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-          </d:devices>
-          XML
-          fi
-          avdmanager delete avd --name taobaolingo-ci >/dev/null 2>&1 || true
-          rm -rf "$HOME/.android/avd/taobaolingo-ci.avd" "$HOME/.android/avd/taobaolingo-ci.ini"
-          echo no | avdmanager create avd --force -n taobaolingo-ci -k 'system-images;android-35;google_apis;x86_64' --device pixel_6
+          test -s "$image_dir/system.img"
+          export ANDROID_AVD_HOME="$HOME/.android/avd"
+          mkdir -p "$ANDROID_AVD_HOME/taobaolingo-ci.avd"
+          cat > "$ANDROID_AVD_HOME/taobaolingo-ci.ini" <<EOF
+          avd.ini.encoding=UTF-8
+          path=$ANDROID_AVD_HOME/taobaolingo-ci.avd
+          path.rel=avd/taobaolingo-ci.avd
+          target=android-35
+          EOF
+          cat > "$ANDROID_AVD_HOME/taobaolingo-ci.avd/config.ini" <<EOF
+          AvdId=taobaolingo-ci
+          PlayStore.enabled=false
+          abi.type=x86_64
+          avd.ini.displayname=TaobaoLingo CI Android 15
+          disk.dataPartition.size=4G
+          fastboot.forceColdBoot=yes
+          hw.cpu.arch=x86_64
+          hw.cpu.ncore=2
+          hw.gpu.enabled=yes
+          hw.gpu.mode=swiftshader_indirect
+          hw.keyboard=yes
+          hw.lcd.density=420
+          hw.lcd.height=2400
+          hw.lcd.width=1080
+          hw.ramSize=3072
+          image.sysdir.1=$image_dir/
+          showDeviceFrame=no
+          skin.dynamic=yes
+          skin.name=1080x2400
+          tag.display=Google APIs
+          tag.id=google_apis
+          vm.heapSize=256
+          EOF
           "$ANDROID_SDK_ROOT/emulator/emulator" -list-avds | grep -x taobaolingo-ci
           "$ANDROID_SDK_ROOT/emulator/emulator" -avd taobaolingo-ci \
             -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim \

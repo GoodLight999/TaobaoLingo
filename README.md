@@ -71,6 +71,19 @@ Details: [latest binary verification](analysis/two_string_resource_validation.md
 
 Morphe's official [Root mount](https://github.com/MorpheApp/morphe-manager/blob/main/docs/installers.md) avoids installing a re-signed APK, keeping the original app installed under its original package identity, but requires a rooted phone; ordinary installation does not have this property. No assumption is made that your phone is rooted.
 
+## Binary-difference diagnostics (native app only)
+
+The reproducible [APK triage protocol](analysis/apk_triage_protocol.md) separates the
+original Taobao APK, a **re-signed-only/no-patch control**, and a DinamicX-patched
+APK under both `STRIP_SAFE` and `FULL` rebuild modes. It also inventories
+native ELF/JNI symbols and statically follows DinamicX text-writer call sites.
+The matrix requires the exact original APK (SHA-256 pinned in the protocol);
+this repository contains **no proprietary Taobao binaries**.
+
+The diagnostic scripts and synthetic fixtures run in CI, but those tests
+**do not establish** real Taobao login, working Account navigation or any
+visible English localization. All remain unverified.
+
 ## Offline reproduction
 
 ```sh

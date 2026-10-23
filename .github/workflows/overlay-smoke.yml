@@ -149,6 +149,7 @@ jobs:
             ${{ runner.temp }}/taobaolingo-projection-ready.xml
             ${{ runner.temp }}/taobaolingo-post-consent.png
             ${{ runner.temp }}/taobaolingo-services.txt
+            ${{ runner.temp }}/taobaolingo-display.txt
             ${{ runner.temp }}/taobaolingo-notifications.txt
             ${{ runner.temp }}/taobaolingo-logcat.txt
           if-no-files-found: ignore

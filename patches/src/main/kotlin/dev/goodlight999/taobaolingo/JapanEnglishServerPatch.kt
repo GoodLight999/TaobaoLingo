@@ -108,8 +108,8 @@ val japanEnglishServerPickerPatch = bytecodePatch(
                 move-result-object v13
                 check-cast v13, $LANG_MODEL
                 iget-object v13, v13, $LANG_MODEL->lang:Ljava/lang/String;
-                const-string v14, "en_US"
-                invoke-virtual {v14, v13}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+                const-string v15, "en_US"
+                invoke-virtual {v15, v13}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
                 move-result v13
                 if-nez v13, :taobaolingo_finish_site
                 goto :taobaolingo_lang_loop

@@ -21,30 +21,6 @@ private val taobao = Compatibility(
     targets = listOf(AppTarget(version = "10.66.30", isExperimental = true))
 )
 
-private object LanguageGetter : Fingerprint(
-    definingClass = LOCALIZATION,
-    name = "h",
-    returnType = LANGUAGE,
-    parameters = emptyList(),
-    isStatic = true
-)
-
-private object LocaleGetter : Fingerprint(
-    definingClass = "Lcom/alibaba/ability/localization/LocalizationManager;",
-    name = "d",
-    returnType = "Ljava/util/Locale;",
-    parameters = emptyList(),
-    isStatic = false
-)
-
-private object ResourceLocaleUpdater : Fingerprint(
-    definingClass = "Lcom/alibaba/ability/localization/LocalizationManager;",
-    name = "i",
-    returnType = "V",
-    parameters = listOf("Landroid/content/Context;", LANGUAGE),
-    isStatic = false
-)
-
 private object LocalizedStringLookup : Fingerprint(
     definingClass = LOCALIZATION,
     name = "q",
@@ -61,89 +37,6 @@ private object NamedStringLookup : Fingerprint(
     isStatic = true
 )
 
-private object InternationalFlag : Fingerprint(
-    definingClass = LOCALIZATION,
-    name = "o",
-    returnType = "Z",
-    parameters = emptyList(),
-    isStatic = true
-)
-
-private object SceneFlag : Fingerprint(
-    definingClass = "Lcom/taobao/analysis/scene/SceneIdentifier;",
-    name = "isI18nEdition",
-    returnType = "I", // Not Z in 10.66.30.
-    parameters = emptyList(),
-    isStatic = true
-)
-
-/**
- * Uses Taobao's own English language enum and Java Locale.ENGLISH.
- * The shopping / shipping region is NOT edited in persistent settings.
- * This does not translate remote WebView / server-rendered content.
- */
-@Suppress("unused")
-val forceEnglishUiPatch = bytecodePatch(
-    name = "TaobaoLingo: Force English UI",
-    description = "Use bundled English locale while retaining configured shopping region (experimental).",
-    default = false
-) {
-    compatibleWith(taobao)
-    execute {
-        LanguageGetter.method.addInstructions(
-            0,
-            """
-                sget-object v0, $LANGUAGE->ENGLISH:$LANGUAGE
-                return-object v0
-            """.trimIndent()
-        )
-        LocaleGetter.method.addInstructions(
-            0,
-            """
-                sget-object v0, Ljava/util/Locale;->ENGLISH:Ljava/util/Locale;
-                return-object v0
-            """.trimIndent()
-        )
-    }
-}
-
-/**
- * Optional experiment: switches on two edition tests in addition to language override.
- * This may affect non-language behaviour. Never enabled by default.
- */
-@Suppress("unused")
-val enableInternationalUiPatch = bytecodePatch(
-    name = "TaobaoLingo: International UI flags",
-    description = "Optionally set international-edition tests; may change more than UI (experimental).",
-    default = false
-) {
-    compatibleWith(taobao)
-    execute {
-        InternationalFlag.method.addInstructions(0, "const/4 v0, 0x1\nreturn v0")
-        SceneFlag.method.addInstructions(0, "const/4 v0, 0x1\nreturn v0")
-    }
-}
-
-/**
- * Conservative UI-only localization experiment.
- * Only modify the Android Resources/Configuration updater's Language argument.
- * Do not override application language getters that feed networking / edition APIs.
- * LocalizationManager.a() invokes this method on each activity creation.
- */
-@Suppress("unused")
-val englishUiResourcesPatch = bytecodePatch(
-    name = "TaobaoLingo: English UI resources only",
-    description = "Set Android UI resources to English without changing language getters used by network and region logic (experimental).",
-    default = false
-) {
-    compatibleWith(taobao)
-    execute {
-        ResourceLocaleUpdater.method.addInstructions(
-            0,
-            "sget-object p2, $LANGUAGE->ENGLISH:$LANGUAGE"
-        )
-    }
-}
 
 /**
  * Localized Resources.getString() for the 909 calls to Localization.q(int).
@@ -153,6 +46,7 @@ val englishUiResourcesPatch = bytecodePatch(
  * Uses only three existing local registers in q(int) (5 registers total,
  * one parameter; v0-v3 are locals in Taobao 10.66.30).
  * Fails through to the original implementation if the app context is absent.
+ * Named lookups through Localization.r(String) are handled the same way.
  * This does not translate remote JSON, WebView, or images.
  */
 @Suppress("unused")

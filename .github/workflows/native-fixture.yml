@@ -9,12 +9,9 @@ on:
       - 'patches/**'
       - 'tests/VerifyDinamicXNativeLabels.java'
       - '.github/workflows/native-fixture.yml'
-  pull_request:
-    paths:
-      - 'fixture/**'
-      - 'patches/**'
-      - 'tests/VerifyDinamicXNativeLabels.java'
-      - '.github/workflows/native-fixture.yml'
+concurrency:
+  group: native-dinamicx-fixture
+  cancel-in-progress: true
 
 permissions:
   contents: read

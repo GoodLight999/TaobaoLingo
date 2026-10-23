@@ -17,7 +17,7 @@ BUNDLE="$OUTPUT/taobaolingo-legacy.mpp"
 SIGNING_KEY="$OUTPUT/diagnostic-signing.p12"
 EXPECTED="3e709717a60fdeeb59354df60fb6cf279ffb023c01e095e16bccfbad75f683dd"
 
-for tool in java javac keytool kotlinc python3 sha256sum; do
+for tool in java javac keytool kotlinc python3 sha256sum apksigner; do
   command -v "$tool" >/dev/null || { echo "Missing tool: $tool" >&2; exit 2; }
 done
 [[ -s "$ORIGINAL" && -s "$DESKTOP" ]] || { echo "APK or Morphe Desktop JAR missing" >&2; exit 2; }
@@ -46,10 +46,11 @@ javac -cp "$DESKTOP" -d "$OUTPUT/classes" \
 patch_variant() {
   local mode="$1" patch="$2" out="$3"
   local path="$OUTPUT/$out.apk" log="$OUTPUT/$out.log"
+  local unsigned="$OUTPUT/$out-unsigned.apk"
+  # Do not rely on Morphe's PKCS12->BKS alias conversion: that path has
+  # failed even when the correct alias/password are explicitly supplied.
   local args=(patch "$ORIGINAL" --exclusive "--bytecode-mode=$mode"
-    "-p=$BUNDLE" "-o=$path"
-    "--keystore=$SIGNING_KEY" "--keystore-password=Morphe"
-    "--keystore-entry-alias=Morphe" "--keystore-entry-password=Morphe")
+    "-p=$BUNDLE" "-o=$unsigned" "--unsigned")
   if [[ "$patch" == "native" ]]; then
     args+=("-e=TaobaoLingo: Native DinamicX English labels (experimental)")
   fi
@@ -58,7 +59,14 @@ patch_variant() {
     tail -n 90 "$log" >&2
     exit 1
   fi
-  [[ -s "$path" ]] || { echo "Missing output: $path" >&2; exit 1; }
+  [[ -s "$unsigned" ]] || { echo "Missing unsigned output: $unsigned" >&2; exit 1; }
+  apksigner sign --ks "$SIGNING_KEY" --ks-pass pass:Morphe \
+    --ks-key-alias Morphe --key-pass pass:Morphe \
+    --v1-signing-enabled true --v2-signing-enabled true --v3-signing-enabled true \
+    --out "$path" "$unsigned" >>"$log" 2>&1
+  apksigner verify --verbose --print-certs "$path" >>"$log" 2>&1
+  [[ -s "$path" ]] || { echo "Missing signed output: $path" >&2; exit 1; }
+  rm -f "$unsigned"
 }
 
 patch_variant STRIP_SAFE none control-safe

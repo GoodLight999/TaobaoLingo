@@ -59,7 +59,8 @@ jobs:
               assert 'Patcher-Version: 2.0.0' in manifest
               for filename in ('TaobaoLanguagePatchesKt.class',
                                'JapanEnglishPickerPatchKt.class',
-                               'JapanEnglishServerPatchKt.class'):
+                               'JapanEnglishServerPatchKt.class',
+                               'DinamicXEnglishLabelsPatchKt.class'):
                   assert any(n.endswith(filename) for n in names), filename
           Path('TaobaoLingo.mpp').write_bytes(path.read_bytes())
           print('Validated', path, path.stat().st_size)
@@ -76,15 +77,23 @@ jobs:
           cat > release-notes.md <<'EOF'
           Experimental Taobao 10.66.30 patch bundle for Morphe Manager 2 / Patcher 2.
 
-          Includes:
-          - English native string resource lookups without global network locale overrides
+          Includes (all experimental, disabled by default):
+          - Native DinamicX English labels: 108 exact-match Chinese UI strings
+          - Native English string resource lookups without protocol locale overrides
           - Japanese region English picker (bundled fallback)
           - Japanese region English picker (server locale model)
 
-          The latter two patches are experimental and must be enabled together.
-          Android runtime login, home rendering and JP+English server acceptance
-          are NOT verified. The older global language override is not included.
-          APKs modified by Morphe normally require re-signing.
+          Real Taobao 10.66.30 APK: 595,518 original methods checked;
+          only four DinamicX text hooks changed with STRIP_SAFE. APK
+          v1/v2/v3 signing verification succeeded. An independent synthetic
+          Android 15 fixture confirmed translation through all four hooks.
+
+          IMPORTANT: Real Taobao UI English, Account, login, server and
+          anti-tamper functionality remain UNVERIFIED/UNFIXED. Do not treat
+          successful APK builds as live translation proof. Use STRIP_SAFE.
+          The two JP-picker experiments must be enabled together.
+          Repackaged APKs have a different signer than official Taobao.
+          No OCR/overlays or proprietary APK binaries are shipped.
           EOF
           gh release create "$TAG" TaobaoLingo.mpp TaobaoLingo.mpp.sha256 \
             --target "${GITHUB_SHA}" --title "TaobaoLingo ${VERSION} — experimental" \
@@ -97,7 +106,7 @@ jobs:
           version, tag = sys.argv[1:]
           feed = {
               "created_at": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S"),
-              "description": "Experimental Taobao 10.66.30 English localization. Build-tested, Android login/UI and JP+English server acceptance unverified.",
+              "description": "Experimental native DinamicX 108-label + resource/JP-picker patches for Taobao 10.66.30. Real APK 4-method-only STRIP_SAFE verification passed; actual Taobao English UI, Account/login and server acceptance unverified.",
               "download_url": "https://github.com/GoodLight999/TaobaoLingo/releases/download/" + tag + "/TaobaoLingo.mpp",
               "version": version,
           }

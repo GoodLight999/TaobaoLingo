@@ -269,3 +269,92 @@ val englishDinamicXUiLabelsPatch = bytecodePatch(
         FastDxTextAttribute.method.addInstructions(0, fromTemplateAttribute)
     }
 }
+
+
+// Separate opt-in extension: some DXButterTextWidgetNode subclasses save the
+// original String in an OWN field before/after invoking the patched superclass.
+// Translating only the superclass p3 cannot rewrite the subclass's p3.
+// 24 candidates were verified against the exact Taobao 10.66.30 original:
+// - all extend gi6
+// - all override onSetStringAttribute(J,String)
+// - all write their own String/CharSequence field
+// - all have at least three LOCAL registers available for the injected code
+// - all invoke their superclass attribute handler.
+// Do not enable without deliberately testing the expanded 28-method footprint.
+private val extendedTextAttributeTypes = listOf(
+    "Ltb/oe6;",
+    "Lcom/taobao/unit/center/mdc/dinamicx/widget/DXMPTextViewWidgetNode;",
+    "Lcom/taobao/unit/center/mdc/dinamicx/widget/DXMsgTextViewWidgetNode;",
+    "Ltb/g2s;", "Ltb/z1s;",
+    "Lcom/taobao/android/detail2/core/framework/base/dinamicx/a;",
+    "Ltb/a2s;", "Ltb/h2s;", "Ltb/umx;", "Ltb/vmx;", "Ltb/wmx;",
+    "Ltb/xjx;", "Ltb/yjx;",
+    "Lcom/taobao/android/dinamicx/widget/b0;",
+    "Lcom/taobao/android/dinamicx/widget/e0;",
+    "Ltb/ce5;", "Ltb/db6;", "Ltb/op00;", "Ltb/q86;",
+    "Ltb/vr90;", "Ltb/han;", "Ltb/i6z;", "Ltb/ian;", "Ltb/t9n;"
+)
+
+private val extendedAttributeFingerprints by lazy {
+    extendedTextAttributeTypes.map { type ->
+        object : Fingerprint(
+            definingClass = type,
+            name = "onSetStringAttribute",
+            returnType = "V",
+            parameters = listOf("J", "Ljava/lang/String;"),
+            isStatic = false
+        ) {}
+    }
+}
+
+/**
+ * EXTRA EXPERIMENTAL. Translates the TEXT attribute BEFORE subclasses save
+ * their own String fields. This is a separate opt-in patch, disabled by default.
+ * It does not patch login, locale, networking or non-TEXT attributes.
+ * Only intended for validating the identified real-Taobao subclass bypasses.
+ */
+@Suppress("unused")
+val extendedEnglishDxSubclassLabelsPatch = bytecodePatch(
+    name = "TaobaoLingo: Extended DinamicX subclass English labels (experimental)",
+    description = "Translate TEXT input to 24 custom DinamicX subclass attribute handlers before independent field writes.",
+    default = false
+) {
+    compatibleWith(dinamicXCompatibility)
+    execute {
+        val methods = extendedAttributeFingerprints.map { it.method }
+        if (methods.size != 24) {
+            throw PatchException("Expected 24 DinamicX subclass candidates")
+        }
+        for ((index, method) in methods.withIndex()) {
+            val impl = method.implementation
+                ?: throw PatchException("No implementation for " + extendedTextAttributeTypes[index])
+            // p0=this, p1/p2=long id, p3=String: 4 input registers.
+            // Our translation uses local v0,v1,v2, without clobbering p0-p3.
+            if (impl.registerCount < 7) {
+                throw PatchException("Insufficient local registers: " + extendedTextAttributeTypes[index])
+            }
+            val ownStringWrite = impl.instructions.any { instruction ->
+                instruction.opcode == Opcode.IPUT_OBJECT &&
+                    (instruction as? ReferenceInstruction)?.reference?.toString()?.let {
+                        it.endsWith("Ljava/lang/String;") ||
+                            it.endsWith("Ljava/lang/CharSequence;")
+                    } == true
+            }
+            val callsParent = impl.instructions.any { instruction ->
+                instruction.opcode == Opcode.INVOKE_SUPER &&
+                    (instruction as? ReferenceInstruction)?.reference?.toString()
+                        ?.endsWith("->onSetStringAttribute(JLjava/lang/String;)V") == true
+            }
+            if (!ownStringWrite || !callsParent) {
+                throw PatchException("Unexpected subclass TEXT storage/dispatch: " +
+                    extendedTextAttributeTypes[index])
+            }
+        }
+        val instructions = nativeLabelInstructions(
+            valueRegister = "p3", textAttributeGate = true
+        )
+        for (method in methods) {
+            method.addInstructions(0, instructions)
+        }
+    }
+}

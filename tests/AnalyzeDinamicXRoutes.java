@@ -43,6 +43,13 @@ public final class AnalyzeDinamicXRoutes {
                               int registers, int tries, int instructionCount,
                               Set<String> textFieldsWritten, boolean hasTextHash,
                               Set<String> methodCalls) {}
+    // Capture subclass overrides separately from exact patched methods. These
+    // can write a second text field even when they invoke the patched parent.
+    private record AttributeOverride(String source, String superclass,
+                                     List<String> stringFields,
+                                     List<Integer> fieldWriteIndices,
+                                     List<Integer> superInvokeIndices) {}
+    private static final Map<String, AttributeOverride> attrOverrides = new HashMap<>();
     private static final Map<String, TargetInfo> targetData = new HashMap<>();
     private static final Map<String, String> superclassByType = new HashMap<>();
     private static final Map<String, Set<String>> directCallers = new HashMap<>();
@@ -76,6 +83,10 @@ public final class AnalyzeDinamicXRoutes {
                     implementedCount++;
                     String source = id(type, method);
                     boolean target = TARGETS.contains(source);
+                    boolean attributeOverride = source.endsWith(ATTRIBUTE) && !target;
+                    Set<String> subclassStringFields = new TreeSet<>();
+                    List<Integer> subclassFieldWriteIndices = new ArrayList<>();
+                    List<Integer> subclassSuperInvokeIndices = new ArrayList<>();
                     Set<String> textWrites = new TreeSet<>();
                     Set<String> outbound = new TreeSet<>();
                     boolean hash = false;
@@ -92,7 +103,22 @@ public final class AnalyzeDinamicXRoutes {
                                 textWrites.add(ref.getReference().toString());
                             }
                         }
+                        if (attributeOverride &&
+                            insn.getOpcode().name.toUpperCase().startsWith("IPUT_OBJECT") &&
+                            insn instanceof ReferenceInstruction ref) {
+                            String field = ref.getReference().toString();
+                            if (field.endsWith("Ljava/lang/String;") ||
+                                field.endsWith("Ljava/lang/CharSequence;")) {
+                                subclassStringFields.add(field);
+                                subclassFieldWriteIndices.add(count);
+                            }
+                        }
                         String callee = invocation(insn);
+                        if (attributeOverride && callee != null &&
+                            callee.endsWith(ATTRIBUTE) &&
+                            insn.getOpcode().name.toUpperCase().startsWith("INVOKE_SUPER")) {
+                            subclassSuperInvokeIndices.add(count);
+                        }
                         if (callee != null) {
                             if (target) outbound.add(callee);
                             if (TARGETS.contains(callee))
@@ -103,6 +129,13 @@ public final class AnalyzeDinamicXRoutes {
                                     .computeIfAbsent(callee, k -> new TreeSet<>()).add(source);
                             }
                         }
+                    }
+                    if (attributeOverride) {
+                        attrOverrides.put(source, new AttributeOverride(
+                            source, cls.getSuperclass(),
+                            List.copyOf(subclassStringFields),
+                            List.copyOf(subclassFieldWriteIndices),
+                            List.copyOf(subclassSuperInvokeIndices)));
                     }
                     if (target) {
                         var info = new TargetInfo(entry.getName(), cls.getSuperclass(),
@@ -126,6 +159,76 @@ public final class AnalyzeDinamicXRoutes {
             }
         }
         return ancestorTypes;
+    }
+
+    private static String descendantOfTarget(String type) {
+        Set<String> seen = new HashSet<>();
+        while (type != null && seen.add(type)) {
+            type = superclassByType.get(type);
+            if (DX_BUTTER.equals(type)) return DX_BUTTER;
+            if (DX_FAST.equals(type)) return DX_FAST;
+        }
+        return null;
+    }
+
+    private static void reportSubclassOverrides(PrintWriter out) {
+        out.println("## Subclass attribute overrides that may bypass translation");
+        out.println();
+        out.println("The four-hook patch translates arguments inside gi6/cx5. A subclass");
+        out.println("can store its own raw String/CharSequence before or after invoking");
+        out.println("the patched parent. These are static write-site observations,");
+        out.println("NOT runtime evidence that a displayed label remains Chinese.");
+        out.println();
+        int butterDescendants = 0;
+        int fastDescendants = 0;
+        for (String type : superclassByType.keySet()) {
+            String parent = descendantOfTarget(type);
+            if (DX_BUTTER.equals(parent)) butterDescendants++;
+            if (DX_FAST.equals(parent)) fastDescendants++;
+        }
+        out.println("- Descendant classes: Butter=" + butterDescendants +
+                    ", Fast=" + fastDescendants);
+        var applicable = new java.util.TreeMap<String, AttributeOverride>();
+        for (var candidate : attrOverrides.entrySet()) {
+            String type = candidate.getKey().substring(0,
+                candidate.getKey().indexOf("->"));
+            if (descendantOfTarget(type) != null) {
+                applicable.put(candidate.getKey(), candidate.getValue());
+            }
+        }
+        int withOwnStringWrites = 0, beforeSuper = 0, afterSuper = 0, noSuper = 0;
+        for (var row : applicable.entrySet()) {
+            AttributeOverride entry = row.getValue();
+            if (!entry.stringFields().isEmpty()) withOwnStringWrites++;
+            int before = 0, after = 0;
+            if (entry.superInvokeIndices().isEmpty()) {
+                noSuper++;
+            } else {
+                int first = Collections.min(entry.superInvokeIndices());
+                int last = Collections.max(entry.superInvokeIndices());
+                for (int index : entry.fieldWriteIndices()) {
+                    if (index < first) before++;
+                    if (index > last) after++;
+                }
+            }
+            if (before > 0) beforeSuper++;
+            if (after > 0) afterSuper++;
+            out.println("- " + row.getKey() + " | parent=" +
+                entry.superclass() + " | string writes=" +
+                entry.stringFields().size() + " | before invoke-super=" + before +
+                " | after invoke-super=" + after +
+                " | invoke-super count=" + entry.superInvokeIndices().size());
+        }
+        out.println("- Total inherited attribute overrides: " + applicable.size());
+        out.println("- Overrides writing additional String/CharSequence fields: " +
+                    withOwnStringWrites);
+        out.println("- Override methods with string stores before invoke-super: " +
+                    beforeSuper + "; after invoke-super: " + afterSuper);
+        out.println("- Overrides without a direct invoke-super attribute call: " + noSuper);
+        out.println();
+        out.println("Independent text fields may feed custom renderers; addressing them");
+        out.println("safely needs branch-aware bytecode analysis and device validation.");
+        out.println();
     }
 
     private static boolean mayDispatchToTarget(String methodRef) {
@@ -190,6 +293,7 @@ public final class AnalyzeDinamicXRoutes {
             for (String caller : callers) out.println("  - " + caller);
             out.println();
         }
+        reportSubclassOverrides(out);
         out.println("## Virtual dispatch via a target superclass");
         out.println("Target class lineage: " + targetLineage());
         out.println("Calls on the base class may dispatch to the target override "

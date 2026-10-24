@@ -1,0 +1,5 @@
+10-24 03:21:20.663  3231  3231 E CarrierServices: [2] ecr.a: Invalid signature found for com.android.contacts: E39B7BFBE0A67D78292F6CC62E06CA27A2EBF255
+10-24 03:21:20.669  3231  3231 E CarrierServices: [2] ecr.a: Invalid signature found for com.android.contacts: E39B7BFBE0A67D78292F6CC62E06CA27A2EBF255
+10-24 03:21:23.118  6734  6734 E TBAnrProfiler: ANR Early Init com.taobao.taobao
+10-24 03:21:33.205  6734  7147 F libc    : Fatal signal 11 (SIGSEGV), code 2 (SEGV_ACCERR), fault addr 0x7a1d7d5f3920 in tid 7147 (NativeThread), pid 6734 (m.taobao.taobao)
+10-24 03:21:33.321  6734  7036 W m.taobao.taoba: Long monitor contention with owner MTOPSDK DefaultPool Thread:0 (7033) at com.alibaba.wireless.security.open.SecurityGuardManager com.alibaba.wireless.security.open.SecurityGuardManager.getInstance(android.content.Context, java.lang.String)(Taobao:2) waiters=2 in void tb.n9f.d(mtopsdk.mtop.global.MtopConfig) for 1.269s

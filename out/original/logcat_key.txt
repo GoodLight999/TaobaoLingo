@@ -1,0 +1,63 @@
+10-24 03:27:08.357  4295  4295 E TBAnrProfiler: ANR Early Init com.taobao.taobao
+10-24 03:27:18.554  4295  4935 W ziparchive: Unable to open '/data/app/~~K5Y32ihaKfxf1-JNgXI8xg==/com.taobao.taobao--XSfU_zhhi1YWkp4CeoTUg==/lib/arm64/libsgmain.dm': No such file or directory
+10-24 03:27:18.554  4295  4935 W ziparchive: Unable to open '/data/app/~~K5Y32ihaKfxf1-JNgXI8xg==/com.taobao.taobao--XSfU_zhhi1YWkp4CeoTUg==/lib/arm64/libsgmain.dm': No such file or directory
+10-24 03:27:18.550  4295  4295 W com.taobao.taobao: type=1400 audit(0.0:48): avc:  denied  { setattr } for  comm=4D544F5053444B2044656661756C74 name="libsgmain.so" dev="dm-40" ino=163901 scontext=u:r:untrusted_app_32:s0:c192,c256,c512,c768 tcontext=u:object_r:apk_data_file:s0 tclass=file permissive=0 app=com.taobao.taobao
+10-24 03:27:18.933  4295  4936 W m.taobao.taobao: Long monitor contention with owner MTOPSDK DefaultPool Thread:0 (4935) at com.alibaba.wireless.security.open.SecurityGuardManager com.alibaba.wireless.security.open.SecurityGuardManager.getInstance(android.content.Context, java.lang.String)(Taobao:2) waiters=2 in void tb.n9f.d(mtopsdk.mtop.global.MtopConfig) for 510ms
+10-24 03:27:20.845  5219  5219 E TBAnrProfiler: ANR Early Init com.taobao.taobao:channel
+10-24 03:27:20.959  5219  5297 W ziparchive: Unable to open '/data/app/~~K5Y32ihaKfxf1-JNgXI8xg==/com.taobao.taobao--XSfU_zhhi1YWkp4CeoTUg==/lib/arm64/libsgmain.dm': No such file or directory
+10-24 03:27:20.959  5219  5297 W ziparchive: Unable to open '/data/app/~~K5Y32ihaKfxf1-JNgXI8xg==/com.taobao.taobao--XSfU_zhhi1YWkp4CeoTUg==/lib/arm64/libsgmain.dm': No such file or directory
+10-24 03:27:22.394  4295  5076 F m.taobao.taobao: runtime.cc:691] "MTOPSDK RequestPool Thread:1" prio=4 tid=159 Blocked
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691]   native: #07 pc 007a646e  /data/app/~~K5Y32ihaKfxf1-JNgXI8xg==/com.taobao.taobao--XSfU_zhhi1YWkp4CeoTUg==/oat/x86_64/base.vdex (mtopsdk.mtop.intf.Mtop.checkMtopSDKInit+70)
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691]   at mtopsdk.mtop.intf.Mtop.checkMtopSDKInit(Taobao:35)
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691]   at mtopsdk.mtop.intf.MtopBuilder$1.run(Taobao:80)
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691]   at mtopsdk.mtop.util.MtopSDKThreadPoolExecutorFactory$MtopSDKThreadFactory$1.run(Taobao:52)
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691] "MTOPSDK DefaultPool Thread:1" prio=4 tid=73 Waiting
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691]   at com.alibaba.wireless.security.mainplugin.SecurityGuardMainPlugin.γ(unavailable:14)
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691]   at com.alibaba.wireless.security.mainplugin.SecurityGuardMainPlugin.щ(unavailable:14)
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691]   at com.alibaba.wireless.security.mainplugin.SecurityGuardMainPlugin.getInterface(unavailable:14)
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691]   at com.alibaba.wireless.security.open.SecurityGuardManager.getInterface(Taobao:25)
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691]   at com.alibaba.wireless.security.open.SecurityGuardManager.a(Taobao:42)
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691]   at com.alibaba.wireless.security.open.SecurityGuardManager.getUMIDComp(Taobao:24)
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691]   at mtopsdk.mtop.global.init.InnerMtopInitTask.executeSignTask(Taobao:33)
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691]   at mtopsdk.mtop.intf.Mtop$1.run(Taobao:54)
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691]   at mtopsdk.mtop.util.MtopSDKThreadPoolExecutorFactory$MtopSDKThreadFactory$1.run(Taobao:52)
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691] "MTOPSDK DefaultPool Thread:0" prio=4 tid=75 Waiting
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691]   at com.alibaba.wireless.security.mainplugin.SecurityGuardMainPlugin.γ(unavailable:14)
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691]   at com.alibaba.wireless.security.mainplugin.SecurityGuardMainPlugin.щ(unavailable:14)
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691]   at com.alibaba.wireless.security.mainplugin.SecurityGuardMainPlugin.getInterface(unavailable:14)
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691]   at com.alibaba.wireless.security.open.SecurityGuardManager.getInterface(Taobao:25)
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691]   at com.alibaba.wireless.security.open.SecurityGuardManager.a(Taobao:42)
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691]   at com.alibaba.wireless.security.open.SecurityGuardManager.getUMIDComp(Taobao:24)
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691]   at mtopsdk.mtop.global.init.InnerMtopInitTask.executeSignTask(Taobao:33)
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691]   at mtopsdk.mtop.intf.Mtop$1.run(Taobao:54)
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691]   at mtopsdk.mtop.util.MtopSDKThreadPoolExecutorFactory$MtopSDKThreadFactory$1.run(Taobao:52)
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691] "MTOPSDK DefaultPool Thread:2" prio=4 tid=84 Waiting
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691]   at com.alibaba.wireless.security.mainplugin.SecurityGuardMainPlugin.γ(unavailable:14)
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691]   at com.alibaba.wireless.security.mainplugin.SecurityGuardMainPlugin.щ(unavailable:14)
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691]   at com.alibaba.wireless.security.mainplugin.SecurityGuardMainPlugin.getInterface(unavailable:14)
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691]   at com.alibaba.wireless.security.open.SecurityGuardManager.getInterface(Taobao:25)
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691]   at com.alibaba.wireless.security.open.SecurityGuardManager.a(Taobao:42)
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691]   at com.alibaba.wireless.security.open.SecurityGuardManager.getUMIDComp(Taobao:24)
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691]   at mtopsdk.mtop.global.init.InnerMtopInitTask.executeSignTask(Taobao:33)
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691]   at mtopsdk.mtop.intf.Mtop$1.run(Taobao:54)
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691]   at mtopsdk.mtop.util.MtopSDKThreadPoolExecutorFactory$MtopSDKThreadFactory$1.run(Taobao:52)
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691]   at com.alibaba.wireless.security.mainplugin.SecurityGuardMainPlugin$б.run(unavailable:102)
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691]   at com.alibaba.wireless.security.mainplugin.SecurityGuardMainPlugin.γ(unavailable:14)
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691]   at com.alibaba.wireless.security.mainplugin.SecurityGuardMainPlugin.щ(unavailable:14)
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691]   at com.alibaba.wireless.security.mainplugin.SecurityGuardMainPlugin.getInterface(unavailable:14)
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691]   at com.alibaba.wireless.security.open.SecurityGuardManager.getInterface(Taobao:25)
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691]   at com.alibaba.wireless.security.open.SecurityGuardManager.a(Taobao:42)
+10-24 03:27:22.411  4295  5076 F m.taobao.taobao: runtime.cc:691]   at com.alibaba.wireless.security.open.SecurityGuardManager.getUMIDComp(Taobao:24)
+10-24 03:27:22.413  4295  5076 F m.taobao.taobao: runtime.cc:691] "MTOPSDK RequestPool Thread:0" prio=4 tid=93 TimedWaiting
+10-24 03:27:22.413  4295  5076 F m.taobao.taobao: runtime.cc:691]   at mtopsdk.mtop.util.MtopSDKThreadPoolExecutorFactory$MtopSDKThreadFactory$1.run(Taobao:52)
+10-24 03:27:22.413  4295  5076 F m.taobao.taobao: runtime.cc:691] "HomeMtopThread" prio=5 tid=114 Native
+10-24 03:27:22.415  4295  5076 F libc    : Fatal signal 6 (SIGABRT), code -1 (SI_QUEUE) in tid 5076 (NativeThread), pid 4295 (m.taobao.taobao)
+10-24 03:27:22.416  4295  5055 W System.err: java.lang.ClassNotFoundException: Didn't find class "com.alibaba.wireless.security.sgextsdk.sgsecfont.SecFontMain" on path: DexPathList[[zip file "/data/app/~~K5Y32ihaKfxf1-JNgXI8xg==/com.taobao.taobao--XSfU_zhhi1YWkp4CeoTUg==/lib/arm64/libsgmain.so"],nativeLibraryDirectories=[/data/app/~~K5Y32ihaKfxf1-JNgXI8xg==/com.taobao.taobao--XSfU_zhhi1YWkp4CeoTUg==/lib/arm64, /data/user/0/com.taobao.taobao/app_SGLib/app_1792812405/main, /system/lib64, /system_ext/lib64]]
+10-24 03:27:22.416  4295  5055 W System.err: 	at com.alibaba.wireless.security.middletierplugin.SecurityGuardMiddleTierPlugin.onPluginLoaded(Unknown Source:69)
+10-24 03:27:22.416  4295  5055 W System.err: 	at com.alibaba.wireless.security.mainplugin.SecurityGuardMainPlugin$б.run(Unknown Source:406)
+10-24 03:27:22.851  4295  4935 W m.taobao.taobao: Long monitor contention with owner SGLOAD (5055) at void com.alibaba.wireless.security.mainplugin.SecurityGuardMainPlugin$б.run()(:-1) waiters=1 in void com.alibaba.wireless.security.mainplugin.SecurityGuardMainPlugin.β() for 291ms
+10-24 03:27:23.076  5219  5401 F .taobao:channel: runtime.cc:691]   at anet.channel.security.SecurityGuardImpl.decrypt(Taobao:87)
+10-24 03:27:23.082  5219  5401 F libc    : Fatal signal 6 (SIGABRT), code -1 (SI_QUEUE) in tid 5401 (NativeThread), pid 5219 (.taobao:channel)
+10-24 03:27:36.923  5914  6051 I NearbyDiscovery: FastPairScanner: eventType=SERVICE_INITIALIZE, intReq=false, scanning=false, scanAllowed=true, bleEnabled=true, bleScanAvailable=false, lockScanRate=false, startScanningByLowPowerMode=false [CONTEXT service_id=265 ]
+10-24 03:27:42.972  5914  6051 I NearbyDiscovery: FastPairScanner: eventType=INTERNAL_DOWNGRADE_SCAN, intReq=true, scanning=true, scanAllowed=true, bleEnabled=true, bleScanAvailable=false, lockScanRate=false, startScanningByLowPowerMode=false [CONTEXT service_id=265 ]
+10-24 03:28:25.964  5995  6133 E constellation: [api_verify_phone_operation] Failed to generate Client Signature

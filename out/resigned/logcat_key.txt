@@ -1,0 +1,6 @@
+10-24 03:30:06.348  6949  6949 E TBAnrProfiler: ANR Early Init com.taobao.taobao
+10-24 03:30:15.516  6949  7146 W ziparchive: Unable to open '/data/app/~~ohter1z6tx7QrKDj9Jj-QQ==/com.taobao.taobao-qpN-FuRJiEApnYExZcjAHQ==/lib/arm64/libsgmain.dm': No such file or directory
+10-24 03:30:15.516  6949  7146 W ziparchive: Unable to open '/data/app/~~ohter1z6tx7QrKDj9Jj-QQ==/com.taobao.taobao-qpN-FuRJiEApnYExZcjAHQ==/lib/arm64/libsgmain.dm': No such file or directory
+10-24 03:30:15.514  6949  6949 W com.taobao.taobao: type=1400 audit(0.0:148): avc:  denied  { setattr } for  comm=4D544F5053444B2044656661756C74 name="libsgmain.so" dev="incremental-fs" ino=376877 scontext=u:r:untrusted_app_32:s0:c193,c256,c512,c768 tcontext=u:object_r:apk_data_file:s0 tclass=file permissive=0 app=com.taobao.taobao
+10-24 03:30:16.587  6949  7223 F libc    : Fatal signal 6 (SIGABRT), code -1 (SI_QUEUE) in tid 7223 (NativeThread), pid 6949 (m.taobao.taobao)
+10-24 03:30:26.063  5995  6071 E constellation: [api_verify_phone_operation] Failed to generate Client Signature

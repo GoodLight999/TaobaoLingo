@@ -68,7 +68,7 @@ jobs:
         run: |
           test -d out || exit 0
           D=$(mktemp -d); cp -r out "$D/"
-          cd "$D" && git init -q && git checkout -q -b ci-results
+          cd "$D" && git init -q && git checkout -q -b ci-results-${{ inputs.api_level }}
           echo "run ${{ github.run_id }} api ${{ inputs.api_level }}" > out/RUN.txt
           git add -A && git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -qm "evidence run ${{ github.run_id }}"
-          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ci-results
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ci-results-${{ inputs.api_level }}

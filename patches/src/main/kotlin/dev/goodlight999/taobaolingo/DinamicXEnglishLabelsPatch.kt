@@ -192,10 +192,19 @@ private fun nativeLabelInstructions(
         appendLine("const-wide v0, 0x8e396ac59L")
         appendLine("cmp-long v2, p1, v0")
         appendLine("if-nez v2, :tl_end")
+    } else {
+        // setText accepts any CharSequence. String.equals(SpannableString)
+        // is false even when the rendered characters are identical.
+        // Normalize only the comparison operand, preserving the original
+        // CharSequence, including its spans, if no label matches.
+        appendLine("if-eqz $valueRegister, :tl_end")
+        appendLine("invoke-virtual {$valueRegister}, Ljava/lang/Object;->toString()Ljava/lang/String;")
+        appendLine("move-result-object v2")
     }
+    val comparisonRegister = if (textAttributeGate) valueRegister else "v2"
     exactUiLabels.entries.forEachIndexed { i, item ->
         appendLine("const-string v0, ${smaliQuoted(item.key)}")
-        appendLine("invoke-virtual {v0, $valueRegister}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z")
+        appendLine("invoke-virtual {v0, $comparisonRegister}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z")
         appendLine("move-result v1")
         appendLine("if-eqz v1, :tl_next_$i")
         appendLine("const-string $valueRegister, ${smaliQuoted(item.value)}")

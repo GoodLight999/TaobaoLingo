@@ -64,6 +64,11 @@ jobs:
               assert any("JapanEnglishPickerPatchKt.class" in n for n in names)
           print("Verified Morphe 2.0.0 bundle:", bundles[0])
           PY
+      - name: Run independent APK triage regression fixtures
+        run: |
+          python3 -m py_compile scripts/triage_apk_variants.py scripts/inspect_native_elf.py scripts/inspect_mytaobao_templates.py tests/test_triage_apk_variants.py tests/test_inspect_native_elf.py tests/test_inspect_mytaobao_templates.py
+          bash -n scripts/run_apk_matrix.sh scripts/reproduce_real_apk_safe.sh
+          python3 -m unittest discover -s tests -p 'test_*.py' -v
       - name: Compile independent DEX verification tools
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -75,7 +80,7 @@ jobs:
           test -s "$JAR"
           javac -cp "$JAR" -d /tmp/taobaolingo-tests \
             tests/VerifyJapanPicker.java tests/VerifyLocalizedResources.java \
-            tests/VerifyDinamicXNativeLabels.java
+            tests/VerifyDinamicXNativeLabels.java tests/AnalyzeDinamicXRoutes.java
       - name: Syntax-check ADB diagnostic PowerShell
         shell: pwsh
         run: |

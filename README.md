@@ -71,6 +71,78 @@ Details: [latest binary verification](analysis/two_string_resource_validation.md
 
 Morphe's official [Root mount](https://github.com/MorpheApp/morphe-manager/blob/main/docs/installers.md) avoids installing a re-signed APK, keeping the original app installed under its original package identity, but requires a rooted phone; ordinary installation does not have this property. No assumption is made that your phone is rooted.
 
+## Executed Android native text fixture (not Taobao)
+
+The real Morphe Patcher 2.0 DinamicX patch has now been **applied to a
+synthetic Android 15 test APK and executed successfully**, rather than
+only inspected as DEX. The [passing emulator CI run](https://github.com/GoodLight999/TaobaoLingo/actions/runs/39945857529)
+confirms English output through both `setText` and the DinamicX TEXT-attribute
+methods, including `SpannableString` inputs. It also checks negative controls
+to avoid translation of non-text properties or unmatched labels. Full results
+and evidence are in [the native runtime verification report](analysis/native_fixture_runtime_verified.md).
+
+**This is a controlled fixture, not Taobao itself.** Real Taobao UI English
+localization, Account navigation, login and anti-tamper compatibility
+remain unresolved and are not implied by this result. Use Morphe Desktop
+**1.19.0 stable** for the Patcher 2.0 desktop fixture test; dev.4 exhibited
+a constructor ABI mismatch.
+
+## Morphe registered URL and releases
+
+**Stable registered source/feed URL:**
+`https://raw.githubusercontent.com/GoodLight999/TaobaoLingo/main/patches-bundle.json`
+
+The feed contains a `download_url` pointing at the **latest published**
+`TaobaoLingo.mpp` release asset. Do **not** register a commit-specific
+GitHub Actions artifact URL as a permanent update source. The
+`.github/workflows/publish.yml` workflow publishes the release on changes
+to production `patches/**` merged into `main`, then updates this same feed
+URL. This is the normal publishing path; diagnostic reports alone need not
+generate new source releases. If the manager caches the feed, refresh its
+patch source/check for updates.
+
+**Safety boundary:** Published bundles include the experimental DinamicX
+labels patch **disabled by default**. Its only verified real-Taobao result is
+an APK with four expected bytecode method changes and valid signatures.
+Taobao on-device English UI, Account navigation and login have **not**
+been shown to work. Publishing a patch source is not a runtime fix.
+
+## Real Taobao APK: verified patch/control builds (2026-10-23)
+
+The exact user-supplied Taobao 10.66.30 ARM64 APK was **successfully rebuilt**
+with the actual production Morphe 2.0 DinamicX patch in `STRIP_SAFE` mode.
+A separate Morphe **zero-patch control** was also rebuilt from the same
+original, then both APKs were signed with the **same** diagnostic identity.
+
+Android SDK `apksigner` verified each APK (v1/v2/v3). Independent method
+comparison over all **595,518 implemented methods** found **exactly four**
+modified methods for the DinamicX native-label patch. The zero-patch
+control retains all original app code/resources unchanged. See the
+[completed real-APK forensic matrix](analysis/real_apk_patch_matrix_verified_20261023.md)
+and [one-command offline reproduction script](scripts/reproduce_real_apk_safe.sh).
+
+`FULL` rebuilding was also tested but failed the four-method-only invariant:
+**1,183 method representations differed**, so `STRIP_SAFE` remains the
+recommended experimental format.
+
+**No actual Taobao user-visible English localization, working Account tab
+or login has yet been demonstrated.** Binary correctness alone cannot
+establish runtime behavior or server acceptance of a different signer.
+Real Taobao APKs and diagnostic signing keys are never published here.
+
+## Binary-difference diagnostics (native app only)
+
+The reproducible [APK triage protocol](analysis/apk_triage_protocol.md) separates the
+original Taobao APK, a **re-signed-only/no-patch control**, and a DinamicX-patched
+APK under both `STRIP_SAFE` and `FULL` rebuild modes. It also inventories
+native ELF/JNI symbols and statically follows DinamicX text-writer call sites.
+The matrix requires the exact original APK (SHA-256 pinned in the protocol);
+this repository contains **no proprietary Taobao binaries**.
+
+The diagnostic scripts and synthetic fixtures run in CI, but those tests
+**do not establish** real Taobao login, working Account navigation or any
+visible English localization. All remain unverified.
+
 ## Offline reproduction
 
 ```sh

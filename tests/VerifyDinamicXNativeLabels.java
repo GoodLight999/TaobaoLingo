@@ -7,6 +7,7 @@ import com.android.tools.smali.dexlib2.Opcodes;
 import com.android.tools.smali.dexlib2.dexbacked.DexBackedDexFile;
 import com.android.tools.smali.dexlib2.iface.*;
 import com.android.tools.smali.dexlib2.iface.instruction.*;
+import com.android.tools.smali.dexlib2.iface.instruction.formats.*;
 
 /**
  * Taobao 10.66.30: verifies four DinamicX text-writing paths were changed,
@@ -33,6 +34,22 @@ public final class VerifyDinamicXNativeLabels {
         if(i instanceof FiveRegisterInstruction r)
             s.append(" D=").append(r.getRegisterD()).append(" E=").append(r.getRegisterE());
         if(i instanceof WideLiteralInstruction l) s.append(" VALUE=").append(l.getWideLiteral());
+        // Without these fields, modifying a const/4, branch or invoke-range
+        // could be invisible to the old checksum despite changing behavior.
+        if(i instanceof NarrowLiteralInstruction l) s.append(" NARROW=").append(l.getNarrowLiteral());
+        if(i instanceof OffsetInstruction o) s.append(" OFFSET=").append(o.getCodeOffset());
+        if(i instanceof RegisterRangeInstruction r)
+            s.append(" START=").append(r.getStartRegister()).append(" COUNT=").append(r.getRegisterCount());
+        if(i instanceof ArrayPayload a)
+            s.append(" ELEMENT_WIDTH=").append(a.getElementWidth()).append(" ELEMENTS=").append(a.getArrayElements());
+        if(i instanceof PackedSwitchPayload p) {
+            s.append(" SWITCH=");
+            for(SwitchElement e:p.getSwitchElements())s.append(e.getKey()).append(":").append(e.getOffset()).append(",");
+        }
+        if(i instanceof SparseSwitchPayload p) {
+            s.append(" SWITCH=");
+            for(SwitchElement e:p.getSwitchElements())s.append(e.getKey()).append(":").append(e.getOffset()).append(",");
+        }
         return s.toString();
     }
     private static Map<String,Code> methods(ZipFile zip) throws Exception {
@@ -67,8 +84,10 @@ public final class VerifyDinamicXNativeLabels {
         try(var original=new ZipFile(args[0]);var candidate=new ZipFile(args[1])) {
             var before=methods(original);
             var after=methods(candidate);
-            check(before.size()==595518 && before.keySet().equals(after.keySet()),
-                "DEX method inventory changed");
+            final boolean fixture = Boolean.getBoolean("taobaolingo.fixture");
+            check(before.keySet().equals(after.keySet()) &&
+                  (fixture ? before.size() >= TARGETS.size() : before.size()==595518),
+                "DEX method inventory changed (fixture="+fixture+", total="+before.size()+")");
             Set<String> changed=new TreeSet<>();
             for(var e:before.entrySet())
                 if(e.getValue().checksum()!=after.get(e.getKey()).checksum())changed.add(e.getKey());
@@ -102,7 +121,7 @@ public final class VerifyDinamicXNativeLabels {
             check(sig.isVerified() && sig.isVerifiedUsingV2Scheme()
                     && sig.isVerifiedUsingV3Scheme(),"APK signature failed: "+sig.getErrors());
         }
-        System.out.println("PASS: 595,518 methods; only four native text binding methods changed");
+        System.out.println("PASS: only four native text binding methods changed; method inventory identical");
         System.out.println("PASS: original instructions intact; text attribute guard present");
         System.out.println("PASS: no unrelated APK resource changes");
         System.out.println("NOTE: static DEX validation does not prove Taobao actually displays English.");

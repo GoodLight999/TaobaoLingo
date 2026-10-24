@@ -78,15 +78,19 @@ jobs:
           Experimental Taobao 10.66.30 patch bundle for Morphe Manager 2 / Patcher 2.
 
           Includes (all experimental, disabled by default):
-          - Native DinamicX English labels: 108 exact-match Chinese UI strings
+          - Native DinamicX English labels: 108 exact-match Chinese UI strings (4 base hooks)
+          - Optional extended DinamicX subclass coverage (24 further TEXT-attribute hooks)
           - Native English string resource lookups without protocol locale overrides
           - Japanese region English picker (bundled fallback)
           - Japanese region English picker (server locale model)
 
           Real Taobao 10.66.30 APK: 595,518 original methods checked;
-          only four DinamicX text hooks changed with STRIP_SAFE. APK
-          v1/v2/v3 signing verification succeeded. An independent synthetic
-          Android 15 fixture confirmed translation through all four hooks.
+          only four base DinamicX text hooks changed with STRIP_SAFE.
+          An independently validated separate extension affects exactly
+          24 additional subclass TEXT-attribute handlers (28 hooks combined,
+          0 unrelated method changes). APK v1/v2/v3 verification passed.
+          An Android 15 synthetic fixture confirms the four BASE hooks; the
+          extra subclass paths have NOT been Android runtime-tested.
 
           IMPORTANT: Real Taobao UI English, Account, login, server and
           anti-tamper functionality remain UNVERIFIED/UNFIXED. Do not treat
@@ -106,7 +110,7 @@ jobs:
           version, tag = sys.argv[1:]
           feed = {
               "created_at": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S"),
-              "description": "Experimental native DinamicX 108-label + resource/JP-picker patches for Taobao 10.66.30. Real APK 4-method-only STRIP_SAFE verification passed; actual Taobao English UI, Account/login and server acceptance unverified.",
+              "description": "Experimental Taobao 10.66.30 native 108-label patches: 4 base hooks plus 24 optional subclass TEXT hooks, all opt-in. Real APK DEX verification passed; actual Taobao English UI, Account/login and server acceptance unverified.",
               "download_url": "https://github.com/GoodLight999/TaobaoLingo/releases/download/" + tag + "/TaobaoLingo.mpp",
               "version": version,
           }

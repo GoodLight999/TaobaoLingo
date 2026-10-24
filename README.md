@@ -107,6 +107,29 @@ an APK with four expected bytecode method changes and valid signatures.
 Taobao on-device English UI, Account navigation and login have **not**
 been shown to work. Publishing a patch source is not a runtime fix.
 
+## Optional DinamicX subclass text hooks (2026-10-24)
+
+Original-APK bytecode analysis found **24** `DXButterTextWidgetNode`
+subclasses that store raw TEXT attributes in independent String/CharSequence
+fields. The conservative four-hook patch modifies only the parent widget's
+parameters, **not** these subclass-owned fields.
+
+A **separate, disabled-by-default** patch,
+`TaobaoLingo: Extended DinamicX subclass English labels (experimental)`,
+translates the input TEXT attribute (hash 38178040921) **before** the 24
+subclass field writes. It is meant to be enabled together with the original
+DinamicX English label patch for a **28-method** experimental build.
+
+The [full real APK verification](analysis/real_apk_24_subclass_extension_20261024.md)
+confirmed Morphe successful patching, Android v1/v2/v3 signing, and exactly
+**28 expected method changes among 595,518**, without altering unrelated
+application bytecode, libraries or resources.
+
+**Neither the 24 extended methods nor real Taobao's visible UI have been
+runtime-validated on ARM64.** This extension does not claim to fix Account,
+login, network restrictions or server-side dynamic template selection.
+Keep it disabled unless deliberately comparing experimental variants.
+
 ## Real Taobao APK: verified patch/control builds (2026-10-23)
 
 The exact user-supplied Taobao 10.66.30 ARM64 APK was **successfully rebuilt**

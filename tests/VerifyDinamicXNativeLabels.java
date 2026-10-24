@@ -15,12 +15,44 @@ import com.android.tools.smali.dexlib2.iface.instruction.formats.*;
  * survive after inserted translation logic. Use Morphe Desktop's dexlib2 JAR.
  */
 public final class VerifyDinamicXNativeLabels {
-    private static final Set<String> TARGETS = Set.of(
-        "Ltb/gi6;->setText(Ljava/lang/CharSequence;)V",
-        "Ltb/cx5;->setText(Ljava/lang/CharSequence;)V",
-        "Ltb/gi6;->onSetStringAttribute(JLjava/lang/String;)V",
-        "Ltb/cx5;->onSetStringAttribute(JLjava/lang/String;)V"
-    );
+    private static final Set<String> TARGETS = initTargets();
+    private static Set<String> initTargets() {
+        Set<String> targets = new TreeSet<>(Set.of(
+            "Ltb/gi6;->setText(Ljava/lang/CharSequence;)V",
+            "Ltb/cx5;->setText(Ljava/lang/CharSequence;)V",
+            "Ltb/gi6;->onSetStringAttribute(JLjava/lang/String;)V",
+            "Ltb/cx5;->onSetStringAttribute(JLjava/lang/String;)V"
+        ));
+        // -Dtaobaolingo.extended=true enables exact 28-method audit of
+        // separately opt-in subclass coverage, not the standard four-hook bundle.
+        if (Boolean.getBoolean("taobaolingo.extended")) {
+            targets.add("Ltb/oe6;->onSetStringAttribute(JLjava/lang/String;)V");
+            targets.add("Lcom/taobao/unit/center/mdc/dinamicx/widget/DXMPTextViewWidgetNode;->onSetStringAttribute(JLjava/lang/String;)V");
+            targets.add("Lcom/taobao/unit/center/mdc/dinamicx/widget/DXMsgTextViewWidgetNode;->onSetStringAttribute(JLjava/lang/String;)V");
+            targets.add("Ltb/g2s;->onSetStringAttribute(JLjava/lang/String;)V");
+            targets.add("Ltb/z1s;->onSetStringAttribute(JLjava/lang/String;)V");
+            targets.add("Lcom/taobao/android/detail2/core/framework/base/dinamicx/a;->onSetStringAttribute(JLjava/lang/String;)V");
+            targets.add("Ltb/a2s;->onSetStringAttribute(JLjava/lang/String;)V");
+            targets.add("Ltb/h2s;->onSetStringAttribute(JLjava/lang/String;)V");
+            targets.add("Ltb/umx;->onSetStringAttribute(JLjava/lang/String;)V");
+            targets.add("Ltb/vmx;->onSetStringAttribute(JLjava/lang/String;)V");
+            targets.add("Ltb/wmx;->onSetStringAttribute(JLjava/lang/String;)V");
+            targets.add("Ltb/xjx;->onSetStringAttribute(JLjava/lang/String;)V");
+            targets.add("Ltb/yjx;->onSetStringAttribute(JLjava/lang/String;)V");
+            targets.add("Lcom/taobao/android/dinamicx/widget/b0;->onSetStringAttribute(JLjava/lang/String;)V");
+            targets.add("Lcom/taobao/android/dinamicx/widget/e0;->onSetStringAttribute(JLjava/lang/String;)V");
+            targets.add("Ltb/ce5;->onSetStringAttribute(JLjava/lang/String;)V");
+            targets.add("Ltb/db6;->onSetStringAttribute(JLjava/lang/String;)V");
+            targets.add("Ltb/op00;->onSetStringAttribute(JLjava/lang/String;)V");
+            targets.add("Ltb/q86;->onSetStringAttribute(JLjava/lang/String;)V");
+            targets.add("Ltb/vr90;->onSetStringAttribute(JLjava/lang/String;)V");
+            targets.add("Ltb/han;->onSetStringAttribute(JLjava/lang/String;)V");
+            targets.add("Ltb/i6z;->onSetStringAttribute(JLjava/lang/String;)V");
+            targets.add("Ltb/ian;->onSetStringAttribute(JLjava/lang/String;)V");
+            targets.add("Ltb/t9n;->onSetStringAttribute(JLjava/lang/String;)V");
+        }
+        return Set.copyOf(targets);
+    }
     private static void check(boolean b, String s) {
         if(!b) throw new AssertionError(s);
     }
@@ -121,7 +153,7 @@ public final class VerifyDinamicXNativeLabels {
             check(sig.isVerified() && sig.isVerifiedUsingV2Scheme()
                     && sig.isVerifiedUsingV3Scheme(),"APK signature failed: "+sig.getErrors());
         }
-        System.out.println("PASS: only four native text binding methods changed; method inventory identical");
+        System.out.println("PASS: only expected native text binding methods changed; method inventory identical");
         System.out.println("PASS: original instructions intact; text attribute guard present");
         System.out.println("PASS: no unrelated APK resource changes");
         System.out.println("NOTE: static DEX validation does not prove Taobao actually displays English.");

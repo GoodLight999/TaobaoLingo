@@ -104,7 +104,7 @@ public final class AnalyzeDinamicXRoutes {
                             }
                         }
                         if (attributeOverride &&
-                            insn.getOpcode().name.toUpperCase().startsWith("IPUT_OBJECT") &&
+                            insn.getOpcode().name.toUpperCase().replace('-', '_').startsWith("IPUT_OBJECT") &&
                             insn instanceof ReferenceInstruction ref) {
                             String field = ref.getReference().toString();
                             if (field.endsWith("Ljava/lang/String;") ||
@@ -116,7 +116,7 @@ public final class AnalyzeDinamicXRoutes {
                         String callee = invocation(insn);
                         if (attributeOverride && callee != null &&
                             callee.endsWith(ATTRIBUTE) &&
-                            insn.getOpcode().name.toUpperCase().startsWith("INVOKE_SUPER")) {
+                            insn.getOpcode().name.toUpperCase().replace('-', '_').startsWith("INVOKE_SUPER")) {
                             subclassSuperInvokeIndices.add(count);
                         }
                         if (callee != null) {

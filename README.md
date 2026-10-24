@@ -87,6 +87,26 @@ remain unresolved and are not implied by this result. Use Morphe Desktop
 **1.19.0 stable** for the Patcher 2.0 desktop fixture test; dev.4 exhibited
 a constructor ABI mismatch.
 
+## Morphe registered URL and releases
+
+**Stable registered source/feed URL:**
+`https://raw.githubusercontent.com/GoodLight999/TaobaoLingo/main/patches-bundle.json`
+
+The feed contains a `download_url` pointing at the **latest published**
+`TaobaoLingo.mpp` release asset. Do **not** register a commit-specific
+GitHub Actions artifact URL as a permanent update source. The
+`.github/workflows/publish.yml` workflow publishes the release on changes
+to production `patches/**` merged into `main`, then updates this same feed
+URL. This is the normal publishing path; diagnostic reports alone need not
+generate new source releases. If the manager caches the feed, refresh its
+patch source/check for updates.
+
+**Safety boundary:** Published bundles include the experimental DinamicX
+labels patch **disabled by default**. Its only verified real-Taobao result is
+an APK with four expected bytecode method changes and valid signatures.
+Taobao on-device English UI, Account navigation and login have **not**
+been shown to work. Publishing a patch source is not a runtime fix.
+
 ## Real Taobao APK: verified patch/control builds (2026-10-23)
 
 The exact user-supplied Taobao 10.66.30 ARM64 APK was **successfully rebuilt**

@@ -1,11 +1,17 @@
 name: Emulator A/B — original vs re-signed (no patch)
 
 on:
+  push:
+    branches: [main, diagnostics/real-apk-runtime-gates-20261025]
+    paths:
+      - 'scripts/ci_emulator_probe.sh'
+      - 'scripts/classify_emulator_probe.py'
+      - '.github/workflows/emulator-ab.yml'
   workflow_dispatch:
     inputs:
       api_level:
-        description: "Android API level (30+ has ARM64 translation on x86_64 images)"
-        default: "30"
+        description: "Android API level (API 33 failed ARM64-only install in prior CI)"
+        default: "34"
 
 permissions:
   contents: write
@@ -42,10 +48,15 @@ jobs:
           "$BT/apksigner" sign --ks work/ctl.jks --ks-pass pass:android --key-pass pass:android --v1-signing-enabled true --v2-signing-enabled true --v3-signing-enabled true work/resigned.apk
           "$BT/apksigner" verify --print-certs work/original.apk | head -3
           "$BT/apksigner" verify --print-certs work/resigned.apk | head -3
+          mkdir -p out
+          python3 scripts/triage_apk_variants.py work/original.apk work/resigned.apk \
+            --strict-original-hash --strict-control --json-out out/binary-control.json \
+            --markdown-out out/binary-control.md
+          sha256sum work/original.apk work/resigned.apk > out/apk-digests.txt
       - name: Run emulator A/B
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: ${{ inputs.api_level }}
+          api-level: ${{ inputs.api_level || '34' }}
           target: google_apis
           arch: x86_64
           ram-size: 4096M
@@ -54,8 +65,18 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           script: |
             adb shell getprop ro.product.cpu.abilist
+            set +e
             bash scripts/ci_emulator_probe.sh original work/original.apk
+            ORIGINAL_STATUS=$?
             bash scripts/ci_emulator_probe.sh resigned work/resigned.apk
+            RESIGNED_STATUS=$?
+            echo "original probe exit: $ORIGINAL_STATUS"
+            echo "re-signed probe exit: $RESIGNED_STATUS"
+            if [ "$ORIGINAL_STATUS" -ne 0 ] || [ "$RESIGNED_STATUS" -ne 0 ]; then
+              echo "::error::Runtime baseline inconclusive: Taobao app UI not reached. Emulator cannot establish a signing or login cause."
+              exit 1
+            fi
+            echo "Taobao UI reached in both variants; Account/login/English still unverified."
       - name: Upload evidence (screenshots, UI dumps, logcat — no APKs)
         if: always()
         uses: actions/upload-artifact@v4
@@ -67,8 +88,19 @@ jobs:
         if: always()
         run: |
           test -d out || exit 0
-          D=$(mktemp -d); cp -r out "$D/"
-          cd "$D" && git init -q && git checkout -q -b ci-results-${{ inputs.api_level }}
-          echo "run ${{ github.run_id }} api ${{ inputs.api_level }}" > out/RUN.txt
-          git add -A && git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -qm "evidence run ${{ github.run_id }}"
-          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ci-results-${{ inputs.api_level }}
+          # Only publish non-sensitive status/metadata to the public branch.
+          # Retain screenshots and unfiltered logs in the run artifact.
+          D=$(mktemp -d)
+          mkdir -p "$D/out/original" "$D/out/resigned"
+          for variant in original resigned; do
+            for item in install.txt pkg.txt status.json status-stage.txt error_codes.txt; do
+              test ! -f "out/$variant/$item" || cp "out/$variant/$item" "$D/out/$variant/$item"
+            done
+          done
+          for item in binary-control.json binary-control.md apk-digests.txt; do
+            test ! -f "out/$item" || cp "out/$item" "$D/out/$item"
+          done
+          cd "$D" && git init -q && git checkout -q -b ci-results-${{ inputs.api_level || '34' }}
+          echo "run ${{ github.run_id }} api ${{ inputs.api_level || '34' }}" > out/RUN.txt
+          git add -A && git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -qm "diagnostic evidence run ${{ github.run_id }}"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ci-results-${{ inputs.api_level || '34' }}

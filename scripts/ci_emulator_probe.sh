@@ -1,47 +1,72 @@
 #!/usr/bin/env bash
-# Usage: probe.sh <label> <apk>   — install, launch, auto-accept consent, capture evidence.
-set -u
-L="$1"; APK="$2"; PKG=com.taobao.taobao; OUT="out/$L"; mkdir -p "$OUT"
-adb uninstall "$PKG" >/dev/null 2>&1 || true
-adb install -r -g "$APK" > "$OUT/install.txt" 2>&1; cat "$OUT/install.txt"
-adb shell pm list packages | grep -q "$PKG" || { echo "INSTALL FAILED ($L)"; exit 0; }
-adb shell dumpsys package "$PKG" | grep -iE "signatures|versionName|primaryCpuAbi" > "$OUT/pkg.txt" || true
-adb logcat -c
-adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1
-tap_words() {  # tap first node whose text/desc matches any consent word
-  adb exec-out uiautomator dump /dev/tty 2>/dev/null | sed 's/UI hierchary dumped.*//' > /tmp/ui.xml || return 1
-  python3 - <<'PY'
-import re,subprocess,xml.etree.ElementTree as ET
-W=["同意并继续","同意","Agree","AGREE","允许","Allow","ALLOW","知道了","跳过","Skip","确定","OK"]
-try: r=ET.parse('/tmp/ui.xml').getroot()
-except Exception: raise SystemExit(1)
-for w in W:
-  for n in r.iter('node'):
-    t=(n.get('text') or '')+'|'+(n.get('content-desc') or '')
-    if w in t and n.get('clickable','true')!='x':
-      a,b,c,d=map(int,re.findall(r'\d+',n.get('bounds')))
-      subprocess.run(['adb','shell','input','tap',str((a+c)//2),str((b+d)//2)])
-      print('tapped',repr(t)); raise SystemExit(0)
+# Reproducible, fail-closed diagnostic: <label> <original-or-resigned-apk>.
+# Original and control MUST use the same non-incremental adb install path.
+# This script does not assert account/login or English UI is functional.
+set -uo pipefail
+LABEL="$1"; APK="$2"; PKG=com.taobao.taobao
+OUT="out/$LABEL"
+mkdir -p "$OUT"
+adb uninstall "$PKG" > "$OUT/uninstall.txt" 2>&1 || true
+adb logcat -c || true
+
+# Previous CI allowed adb to install the original by streaming and the
+# re-signed control via Incremental FS. This difference confounded its logs.
+adb install --no-incremental -r -g "$APK" > "$OUT/install.txt" 2>&1
+INSTALL_RESULT=$?
+cat "$OUT/install.txt"
+if [ "$INSTALL_RESULT" -ne 0 ] || ! adb shell pm path "$PKG" | grep -q 'package:'; then
+  echo 'PACKAGE_INSTALL_FAILED' > "$OUT/status-stage.txt"
+  adb logcat -d -v threadtime > "$OUT/logcat.txt" || true
+  python3 scripts/classify_emulator_probe.py "$OUT" --out "$OUT/status.json" || true
+  exit 1
+fi
+
+adb shell dumpsys package "$PKG" | grep -iE 'signatures|versionName|primaryCpuAbi' > "$OUT/pkg.txt" || true
+adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 > "$OUT/launch.txt" 2>&1 || true
+
+tap_consent() {
+  adb exec-out uiautomator dump /dev/tty 2>/dev/null |
+    sed 's/UI hierchary dumped.*//' > "$OUT/consent_ui.xml" || return 1
+  python3 - "$OUT/consent_ui.xml" <<'PY'
+import re,sys,subprocess,xml.etree.ElementTree as ET
+try:
+    root=ET.parse(sys.argv[1]).getroot()
+except (ET.ParseError,OSError):
+    raise SystemExit(1)
+# Consent only; never auto-submit a user login or payment action.
+words=("同意并继续","同意","Agree","允许","Allow","知道了","跳过","Skip")
+for word in words:
+    for node in root.iter("node"):
+        label=(node.get("text") or "")+"|"+(node.get("content-desc") or "")
+        if word not in label: continue
+        coords=re.findall(r"\d+",node.get("bounds") or "")
+        if len(coords)!=4: continue
+        a,b,c,d=map(int,coords)
+        subprocess.run(["adb","shell","input","tap",str((a+c)//2),str((b+d)//2)],check=False)
+        print("consent control tapped (label suppressed)")
+        raise SystemExit(0)
 raise SystemExit(1)
 PY
 }
-for i in $(seq 1 12); do sleep 8; tap_words && sleep 3; done
-sleep 30
-adb exec-out screencap -p > "$OUT/home.png"
-adb exec-out uiautomator dump /dev/tty 2>/dev/null > "$OUT/home_ui.xml" || true
-# try the 我的淘宝 / account tab
-python3 - "$OUT/home_ui.xml" <<'PY' || true
-import re,sys,subprocess,xml.etree.ElementTree as ET
-try: r=ET.fromstring(open(sys.argv[1]).read().split('UI hierchary')[0])
-except Exception: sys.exit()
-for n in r.iter('node'):
-  t=(n.get('text') or '')+(n.get('content-desc') or '')
-  if '我的淘宝' in t or t.strip()=='我的':
-    a,b,c,d=map(int,re.findall(r'\d+',n.get('bounds'))); subprocess.run(['adb','shell','input','tap',str((a+c)//2),str((b+d)//2)]); print('tapped account'); break
-PY
-sleep 20
-adb exec-out screencap -p > "$OUT/account.png"
-adb logcat -d -v threadtime > "$OUT/logcat.txt"
-grep -iE "mtop|SecurityGuard|sgmain|x-sign|FAIL_SYS|ERRCODE|retCode|SG_ERROR|signature|FATAL|ANR" "$OUT/logcat.txt" | head -400 > "$OUT/logcat_key.txt" || true
-grep -oE "(FAIL_SYS_[A-Z_]+|SG_ERROR_CODE[^,]*|ANDROID_SYS_[A-Z_]+)" "$OUT/logcat.txt" | sort | uniq -c | sort -rn > "$OUT/error_codes.txt" || true
-echo "== $L error codes =="; cat "$OUT/error_codes.txt"
+
+# Fast exit if the real app dies; previous CI idled and later captured only
+# the Android launcher, falsely yielding a green workflow.
+for _ in $(seq 1 9); do
+  sleep 5
+  adb shell pidof "$PKG" > "$OUT/process-during-start.txt" 2>/dev/null || true
+  if [ ! -s "$OUT/process-during-start.txt" ]; then
+    echo 'PROCESS_EXITED_DURING_STARTUP' > "$OUT/status-stage.txt"
+    break
+  fi
+  tap_consent || true
+done
+
+adb exec-out uiautomator dump /dev/tty > "$OUT/home_ui.xml" 2>/dev/null || true
+adb exec-out screencap -p > "$OUT/home.png" 2>/dev/null || true
+adb shell pidof "$PKG" > "$OUT/process.txt" 2>/dev/null || true
+adb logcat -d -v threadtime > "$OUT/logcat.txt" || true
+grep -iE 'mtop|SecurityGuard|sgmain|x-sign|FAIL_SYS|ERRCODE|SG_ERROR|signature|FATAL|ANR|SIGABRT' "$OUT/logcat.txt" |
+  head -400 > "$OUT/logcat_key.txt" || true
+grep -oE '(FAIL_SYS_[A-Z_]+|SG_ERROR_CODE[^,]*|ANDROID_SYS_[A-Z_]+)' "$OUT/logcat.txt" |
+  sort | uniq -c | sort -rn > "$OUT/error_codes.txt" || true
+python3 scripts/classify_emulator_probe.py "$OUT" --out "$OUT/status.json"

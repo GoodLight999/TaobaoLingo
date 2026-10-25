@@ -59,9 +59,9 @@ jobs:
 
       - name: Build production Morphe 2 MPP
         env:
-          ${{ github.actor }}: ${{ github.actor }}
-          ${{ secrets.GITHUB_TOKEN }}: ${{ secrets.GITHUB_TOKEN }}
-        run: gradle buildAndroid --no-daemon
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gradle buildAndroid --no-daemon --stacktrace
 
       - name: Download Patcher 2 compatible Desktop 1.19.0
         env:

@@ -39,6 +39,8 @@ def classify(folder: Path, package: str = PACKAGE) -> dict:
     # official and re-signed APKs. This is a platform confounder, not proof of
     # an APK-integrity rejection.
     aborts = re.findall(r"Fatal signal (\d+) \((SIG[A-Z]+)\)", logcat)
+    native_bridge_signal_abort = ("libndk_translation.so" in logcat and
+                                  "Cannot process signal 11" in logcat)
     signature_errors = sorted(set(re.findall(
         r"(?i)INSTALL_FAILED_[A-Z_]+|INSTALL_PARSE_FAILED_[A-Z_]+",
         install,
@@ -65,6 +67,7 @@ def classify(folder: Path, package: str = PACKAGE) -> dict:
         "ui_xml_valid": xml_valid,
         "observed_ui_packages": sorted(root_packages),
         "observed_fatal_signals": sorted(set(name for _, name in aborts)),
+        "native_bridge_signal_abort": native_bridge_signal_abort,
         "login_verified": False,
         "english_translation_verified": False,
     }

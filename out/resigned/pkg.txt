@@ -1,0 +1,3 @@
+    primaryCpuAbi=arm64-v8a
+    versionName=10.66.30
+    signatures=PackageSignatures{eb67177 version:3, signatures:[66d2b717], past signatures:[]}

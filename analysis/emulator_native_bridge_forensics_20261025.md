@@ -116,3 +116,27 @@ These are not equivalent terminal process states, and the evidence is
 insufficient to conclude that re-signing alone causes the physical
 device's Account/login regression. Both runs expose the native bridge
 SIGABRT confounder on the x86_64 emulator.
+
+## Cross-API native runtime probe: additional observed evidence
+
+[Three-image run 40150040209](https://github.com/GoodLight999/TaobaoLingo/actions/runs/40150040209)
+used Google APIs x86_64 emulator images for Android API 30, 34 and 35.
+All APK installation and signer checks were required to pass before launching.
+
+| API | Original Taobao | Re-signed only | ABI observation |
+| --- | --- | --- | --- |
+| 30 | Installs; SIGSEGV; process exited; no Taobao UI | Installs; SIGSEGV; process exited; no Taobao UI | x86_64, x86, arm64-v8a, armeabi-v7a, armeabi advertised |
+| 34 | Installs; SIGABRT and native-bridge marker; no Taobao UI | Not completed in this specific run (cancelled by superseding push) | x86_64, arm64-v8a advertised |
+| 35 | Installs; SIGABRT and native-bridge marker; no Taobao UI | Not completed in this specific run (cancelled by superseding push) | x86_64, arm64-v8a advertised |
+
+Public evidence branches: ci-results-30, ci-results-34, ci-results-35,
+each contains API-specific install and status metadata. The API 30
+run fully finished both variants, and deliberately failed the workflow.
+API 34/35 had diagnostic evidence for the original APK before cancellation;
+they do not yet establish outcomes for the re-signed control within this
+particular cross-API run. A revised time-bounded CI probe was then executed.
+
+Importantly, native ARM64 ABI compatibility sufficient for installation
+is **not** sufficient for running Taobao or SecurityGuard on these x86_64
+emulators. These results do not identify the user's physical-device login
+failure or prove that a patched Chinese label becomes English.

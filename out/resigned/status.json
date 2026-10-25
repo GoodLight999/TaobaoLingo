@@ -1,0 +1,18 @@
+{
+  "state": "APP_NOT_RUNNING",
+  "installed": true,
+  "install_errors": [],
+  "process_alive_at_capture": false,
+  "taobao_ui_reached": false,
+  "taobao_ui_node_count": 0,
+  "ui_xml_valid": true,
+  "observed_ui_packages": [
+    "android"
+  ],
+  "observed_fatal_signals": [
+    "SIGABRT"
+  ],
+  "native_bridge_signal_abort": true,
+  "login_verified": false,
+  "english_translation_verified": false
+}

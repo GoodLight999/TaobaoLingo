@@ -1,0 +1,2 @@
+original_exit=1
+resigned_exit=1

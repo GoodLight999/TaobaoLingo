@@ -71,3 +71,29 @@ on the user's device is not established.
 **Current result:** Emulator signal-handling failure is supported by its
 actual tombstone. The device Account/login regression remains unexplained.
 Real Taobao native English UI has not been confirmed.
+
+## Executed real APK offline matrix (2026-10-25)
+
+The new workflow [run 40149635567](https://github.com/GoodLight999/TaobaoLingo/actions/runs/40149635567)
+**completed successfully** on SHA 5470360d70afb8e56a70fa1344ff1f498aa74837.
+Evidence artifact: real-apk-matrix-evidence (GitHub Actions artifact ID 12581987911; temporary, 14-day retention).
+The exact SHA-pinned 77,255,755-byte original APK was decrypted in CI without publishing it.
+
+Successful steps:
+
+- Gradle Morphe Patcher 2 MPP build and Morphe Desktop 1.19.0 installation.
+- Build zero-patch control and 108-label four-hook DinamicX native variant from the real Taobao APK via STRIP_SAFE.
+- Sign both control and modified APKs under a single disposable diagnostic certificate; validate with Android SDK apksigner.
+- Independent complete DEX verifier: exactly the four expected DinamicX methods changed among the 595,518 original methods.
+- Independent ZIP member comparison: zero changed non-signature code/resources in the zero-patch control.
+- Native library payloads remain unmodified.
+
+GitHub job log contains:
+
+    OFFLINE PASS: official signatures, unchanged control resources/code, exactly four changed methods.
+    NOT TESTED: Android ARM64 installation, login, Account tab, or real Taobao UI English.
+
+An initial new workflow run failed due missing GitHub Packages env key names.
+A second attempt failed because Morphe Desktop Java 21 classes were started under a Java 17 launcher.
+Both CI setup problems were corrected and the complete offline matrix was rerun to PASS.
+No result here establishes a working app, login or English localization.

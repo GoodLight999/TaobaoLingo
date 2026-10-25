@@ -16,7 +16,7 @@ INSTALL_RESULT=$?
 cat "$OUT/install.txt"
 if [ "$INSTALL_RESULT" -ne 0 ] || ! adb shell pm path "$PKG" | grep -q 'package:'; then
   echo 'PACKAGE_INSTALL_FAILED' > "$OUT/status-stage.txt"
-  adb logcat -d -v threadtime > "$OUT/logcat.txt" || true
+  timeout 35s adb logcat -d -v threadtime > "$OUT/logcat.txt" || true
   python3 scripts/classify_emulator_probe.py "$OUT" --out "$OUT/status.json" || true
   exit 1
 fi
@@ -25,7 +25,7 @@ adb shell dumpsys package "$PKG" | grep -iE 'signatures|versionName|primaryCpuAb
 adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 > "$OUT/launch.txt" 2>&1 || true
 
 tap_consent() {
-  adb exec-out uiautomator dump /dev/tty 2>/dev/null |
+  timeout 12s adb exec-out uiautomator dump /dev/tty 2>/dev/null |
     sed 's/UI hierchary dumped.*//' > "$OUT/consent_ui.xml" || return 1
   python3 - "$OUT/consent_ui.xml" <<'PY'
 import re,sys,subprocess,xml.etree.ElementTree as ET
@@ -51,19 +51,22 @@ PY
 
 # Fast exit if the real app dies; previous CI idled and later captured only
 # the Android launcher, falsely yielding a green workflow.
-for _ in $(seq 1 9); do
+for attempt in $(seq 1 9); do
   sleep 5
-  adb shell pidof "$PKG" > "$OUT/process-during-start.txt" 2>/dev/null || true
+  timeout 10s adb shell pidof "$PKG" > "$OUT/process-during-start.txt" 2>/dev/null || true
   if [ ! -s "$OUT/process-during-start.txt" ]; then
     echo 'PROCESS_EXITED_DURING_STARTUP' > "$OUT/status-stage.txt"
     break
   fi
-  tap_consent || true
+  # Do not trigger an expensive uiautomator dump on every poll.
+  if [[ "$attempt" == 1 || "$attempt" == 4 || "$attempt" == 8 ]]; then
+    tap_consent || true
+  fi
 done
 
-adb exec-out uiautomator dump /dev/tty > "$OUT/home_ui.xml" 2>/dev/null || true
-adb exec-out screencap -p > "$OUT/home.png" 2>/dev/null || true
-adb shell pidof "$PKG" > "$OUT/process.txt" 2>/dev/null || true
+timeout 20s adb exec-out uiautomator dump /dev/tty > "$OUT/home_ui.xml" 2>/dev/null || true
+timeout 20s adb exec-out screencap -p > "$OUT/home.png" 2>/dev/null || true
+timeout 10s adb shell pidof "$PKG" > "$OUT/process.txt" 2>/dev/null || true
 adb logcat -d -v threadtime > "$OUT/logcat.txt" || true
 grep -iE 'mtop|SecurityGuard|sgmain|x-sign|FAIL_SYS|ERRCODE|SG_ERROR|signature|FATAL|ANR|SIGABRT' "$OUT/logcat.txt" |
   head -400 > "$OUT/logcat_key.txt" || true

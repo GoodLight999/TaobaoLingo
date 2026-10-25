@@ -1,0 +1,2 @@
+3e709717a60fdeeb59354df60fb6cf279ffb023c01e095e16bccfbad75f683dd  work/original.apk
+1576ad29bc0c681d4ddbe95c2b6353a175b42e631cd784f6b18f3875dd236915  work/resigned.apk

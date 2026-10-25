@@ -97,3 +97,22 @@ An initial new workflow run failed due missing GitHub Packages env key names.
 A second attempt failed because Morphe Desktop Java 21 classes were started under a Java 17 launcher.
 Both CI setup problems were corrected and the complete offline matrix was rerun to PASS.
 No result here establishes a working app, login or English localization.
+
+## Corrected two-variant emulator regression (2026-10-25)
+
+[Run 40149567863](https://github.com/GoodLight999/TaobaoLingo/actions/runs/40149567863)
+executed both official and re-signed-only binaries with adb --no-incremental,
+from the same exact original SHA-256, and correctly returned workflow FAILURE.
+Persisted in public ci-results-34/out/*/status.json:
+
+| Probe | Install | Liveness at capture | Visible UI | Native bridge abort | Classification |
+| --- | --- | --- | --- | --- | --- |
+| Official original | PASS | Dead | NexusLauncher | true | APP_NOT_RUNNING |
+| Re-signed only | PASS | Alive | Android system UI | true | TAOBAO_UI_NOT_REACHED |
+
+Both scripts returned nonzero (out/probe-exits.txt original_exit=1,
+resigned_exit=1), so neither variant met the native Taobao UI gate.
+These are not equivalent terminal process states, and the evidence is
+insufficient to conclude that re-signing alone causes the physical
+device's Account/login regression. Both runs expose the native bridge
+SIGABRT confounder on the x86_64 emulator.

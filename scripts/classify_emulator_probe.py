@@ -38,12 +38,12 @@ def classify(folder: Path, package: str = PACKAGE) -> dict:
     # The native ARM64 SecurityGuard plugin can crash in emulation for both
     # official and re-signed APKs. This is a platform confounder, not proof of
     # an APK-integrity rejection.
-    aborts = re.findall(r"Fatal signal (\\d+) \\((SIG[A-Z]+)\\)", logcat)
+    aborts = re.findall(r"Fatal signal (\d+) \((SIG[A-Z]+)\)", logcat)
     signature_errors = sorted(set(re.findall(
         r"(?i)INSTALL_FAILED_[A-Z_]+|INSTALL_PARSE_FAILED_[A-Z_]+",
         install,
     )))
-    installed = bool(re.search(r"(?m)^Success\\s*$", install)) and not signature_errors
+    installed = bool(re.search(r"(?m)^Success\s*$", install)) and not signature_errors
     pid = observed if re.fullmatch(r"[0-9 ]+", observed) else ""
     alive = bool(pid)
     ui_reached = bool(package_nodes and alive and installed)

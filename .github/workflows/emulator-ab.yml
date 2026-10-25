@@ -5,6 +5,7 @@ on:
     branches: [main, diagnostics/real-apk-runtime-gates-20261025]
     paths:
       - 'scripts/ci_emulator_probe.sh'
+      - 'scripts/ci_emulator_ab.sh'
       - 'scripts/classify_emulator_probe.py'
       - '.github/workflows/emulator-ab.yml'
   workflow_dispatch:
@@ -63,20 +64,7 @@ jobs:
           disk-size: 8G
           emulator-boot-timeout: 900
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
-          script: |
-            adb shell getprop ro.product.cpu.abilist
-            set +e
-            bash scripts/ci_emulator_probe.sh original work/original.apk
-            ORIGINAL_STATUS=$?
-            bash scripts/ci_emulator_probe.sh resigned work/resigned.apk
-            RESIGNED_STATUS=$?
-            echo "original probe exit: $ORIGINAL_STATUS"
-            echo "re-signed probe exit: $RESIGNED_STATUS"
-            if [ "$ORIGINAL_STATUS" -ne 0 ] || [ "$RESIGNED_STATUS" -ne 0 ]; then
-              echo "::error::Runtime baseline inconclusive: Taobao app UI not reached. Emulator cannot establish a signing or login cause."
-              exit 1
-            fi
-            echo "Taobao UI reached in both variants; Account/login/English still unverified."
+          script: bash scripts/ci_emulator_ab.sh
       - name: Upload evidence (screenshots, UI dumps, logcat — no APKs)
         if: always()
         uses: actions/upload-artifact@v4
@@ -97,7 +85,7 @@ jobs:
               test ! -f "out/$variant/$item" || cp "out/$variant/$item" "$D/out/$variant/$item"
             done
           done
-          for item in binary-control.json binary-control.md apk-digests.txt; do
+          for item in binary-control.json binary-control.md apk-digests.txt emulator-abilist.txt probe-exits.txt; do
             test ! -f "out/$item" || cp "out/$item" "$D/out/$item"
           done
           cd "$D" && git init -q && git checkout -q -b ci-results-${{ inputs.api_level || '34' }}

@@ -1,24 +1,28 @@
-name: Emulator A/B — original vs re-signed (no patch)
+name: Emulator A/B across Android API levels
 
 on:
   push:
-    branches: [main, diagnostics/real-apk-runtime-gates-20261025]
+    branches: [main, diagnostics/emulator-api-matrix-20261025]
     paths:
       - 'scripts/ci_emulator_probe.sh'
       - 'scripts/ci_emulator_ab.sh'
       - 'scripts/classify_emulator_probe.py'
       - '.github/workflows/emulator-ab.yml'
   workflow_dispatch:
-    inputs:
-      api_level:
-        description: "Android API level (API 33 failed ARM64-only install in prior CI)"
-        default: "34"
 
 permissions:
   contents: write
 
 jobs:
   ab:
+    strategy:
+      fail-fast: false
+      matrix:
+        api_level: [30, 34, 35]
+    concurrency:
+      group: taobao-emulator-${{ github.ref }}-${{ matrix.api_level }}
+      cancel-in-progress: true
+    name: Android API ${{ matrix.api_level }}
     runs-on: ubuntu-latest
     timeout-minutes: 50
     env:
@@ -68,7 +72,7 @@ jobs:
       - name: Run emulator A/B
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: ${{ inputs.api_level || '34' }}
+          api-level: ${{ matrix.api_level }}
           target: google_apis
           arch: x86_64
           ram-size: 4096M
@@ -80,7 +84,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: emulator-ab-evidence
+          name: emulator-ab-evidence-api-${{ matrix.api_level }}
           path: out/
           retention-days: 14
       - name: Publish evidence to ci-results branch
@@ -99,7 +103,7 @@ jobs:
           for item in binary-control.json binary-control.md apk-digests.txt signer-original.txt signer-resigned.txt emulator-abilist.txt probe-exits.txt; do
             test ! -f "out/$item" || cp "out/$item" "$D/out/$item"
           done
-          cd "$D" && git init -q && git checkout -q -b ci-results-${{ inputs.api_level || '34' }}
-          echo "run ${{ github.run_id }} api ${{ inputs.api_level || '34' }}" > out/RUN.txt
+          cd "$D" && git init -q && git checkout -q -b ci-results-${{ matrix.api_level }}
+          echo "run ${{ github.run_id }} api ${{ matrix.api_level }}" > out/RUN.txt
           git add -A && git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -qm "diagnostic evidence run ${{ github.run_id }}"
-          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ci-results-${{ inputs.api_level || '34' }}
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ci-results-${{ matrix.api_level }}

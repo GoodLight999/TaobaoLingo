@@ -49,6 +49,15 @@ class ProbeClassificationTest(unittest.TestCase):
         state = classify(self.root)
         self.assertEqual(state["state"], "APP_NOT_RUNNING")
         self.assertEqual(state["observed_fatal_signals"], ["SIGABRT"])
+        self.assertFalse(state["native_bridge_signal_abort"])
+
+    def test_android_native_bridge_abort_is_identified(self):
+        self.put("install.txt", "Success\n")
+        self.put("logcat.txt", "Abort message: 'Cannot process signal 11'\n"
+                 "libndk_translation.so (ndk_translation::HandleHostSignal)")
+        state = classify(self.root)
+        self.assertEqual(state["state"], "APP_NOT_RUNNING")
+        self.assertTrue(state["native_bridge_signal_abort"])
 
     def test_taobao_ui_visible_but_no_login_or_translation_claim(self):
         self.put("install.txt", "Success\n")

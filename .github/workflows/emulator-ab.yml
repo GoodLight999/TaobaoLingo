@@ -43,17 +43,28 @@ jobs:
           echo "$APK_SHA256  work/original.apk" | sha256sum -c -
       - name: Build re-signed control (zero bytecode change)
         run: |
+          set -euo pipefail
           BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
+          export PATH="$BT:$PATH"
+          mkdir -p out
           keytool -genkeypair -keystore work/ctl.jks -storepass android -keypass android -alias ctl -keyalg RSA -keysize 2048 -validity 3650 -dname "CN=TaobaoLingo Control"
           cp work/original.apk work/resigned.apk
           "$BT/apksigner" sign --ks work/ctl.jks --ks-pass pass:android --key-pass pass:android --v1-signing-enabled true --v2-signing-enabled true --v3-signing-enabled true work/resigned.apk
-          "$BT/apksigner" verify --print-certs work/original.apk | head -3
-          "$BT/apksigner" verify --print-certs work/resigned.apk | head -3
-          mkdir -p out
+          "$BT/apksigner" verify --verbose --print-certs work/original.apk > out/signer-original.txt
+          "$BT/apksigner" verify --verbose --print-certs work/resigned.apk > out/signer-resigned.txt
+          sed -n '1,3p' out/signer-original.txt
+          sed -n '1,3p' out/signer-resigned.txt
           python3 scripts/triage_apk_variants.py work/original.apk work/resigned.apk \
             --strict-original-hash --strict-control --json-out out/binary-control.json \
             --markdown-out out/binary-control.md
           sha256sum work/original.apk work/resigned.apk > out/apk-digests.txt
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path("out/binary-control.json").read_text())
+          for variant in ("original", "resigned_only"):
+              assert r["variants"][variant]["signature_check"]["valid"] is True, variant
+          PY
       - name: Run emulator A/B
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -85,7 +96,7 @@ jobs:
               test ! -f "out/$variant/$item" || cp "out/$variant/$item" "$D/out/$variant/$item"
             done
           done
-          for item in binary-control.json binary-control.md apk-digests.txt emulator-abilist.txt probe-exits.txt; do
+          for item in binary-control.json binary-control.md apk-digests.txt signer-original.txt signer-resigned.txt emulator-abilist.txt probe-exits.txt; do
             test ! -f "out/$item" || cp "out/$item" "$D/out/$item"
           done
           cd "$D" && git init -q && git checkout -q -b ci-results-${{ inputs.api_level || '34' }}

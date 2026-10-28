@@ -49,6 +49,10 @@ GitHub の arm64 ランナーには KVM がありません。
    実機結果（2026-10-28、JingMatrix/LSPatch v1.2-487、モジュールなし、moto g52j）:
    - **level 2**: 1回目は `edgecomputer.query` が `retCode=SUCCESS`×2、`SecException` 0件、`GENERATE_MTOP_SIGN_ERROR` なし（原本と同等）。
      2回目は MTOP ログが出ず `SecException` 1件（別経路 `doCommandNative` ← 難読化クラス）。有望だが要追加確認（実ログイン）。
+   - **level 2 手動操作（オーナー確認, 23:04）**: 公式未改変版ではログインなしで商品一覧を閲覧できるのに対し、
+     lv2 版はトップの商品一覧が真っ黒で、何をしてもログインを要求される。`:channel` プロセス（ACCS）が
+     `adaemon-schedul` スレッドで SIGSEGV（SEGV_MAPERR, fault addr 0x6fc40）を起こしていた。
+     → MTOP 署名生成は通るようになったが、別の完全性チェック／ネイティブ処理がまだ LSPatch 環境を拒否している。**lv2 単体では不十分**。
    - **level 3**: `MTOPSDK Default` スレッドで SIGSEGV、`:channel` プロセスも SIGSEGV。使用不可。
 2. **root 環境で元署名を維持したまま差し替え**（Magisk mount / LSPosed モジュール化）
 3. **未改変アプリ＋オーバーレイ翻訳**（`overlay/` 方式）：署名を壊さないため確実に動作します。

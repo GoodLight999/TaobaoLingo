@@ -45,7 +45,11 @@ GitHub の arm64 ランナーには KVM がありません。
 再署名を伴う配布方式（Morphe/ReVanced 型のパッチ＋再署名）では、SecurityGuard を回避しない限り動作しません。
 
 1. **LSPatch / NPatch の署名バイパス（level 2: pm+openat、level 3: +svc）**
-   ネイティブ側の APK 読み取りを元 APK にリダイレクトする方式。実機検証中。
+   ネイティブ側の APK 読み取りを元 APK にリダイレクトする方式。
+   実機結果（2026-10-28、JingMatrix/LSPatch v1.2-487、モジュールなし、moto g52j）:
+   - **level 2**: 1回目は `edgecomputer.query` が `retCode=SUCCESS`×2、`SecException` 0件、`GENERATE_MTOP_SIGN_ERROR` なし（原本と同等）。
+     2回目は MTOP ログが出ず `SecException` 1件（別経路 `doCommandNative` ← 難読化クラス）。有望だが要追加確認（実ログイン）。
+   - **level 3**: `MTOPSDK Default` スレッドで SIGSEGV、`:channel` プロセスも SIGSEGV。使用不可。
 2. **root 環境で元署名を維持したまま差し替え**（Magisk mount / LSPosed モジュール化）
 3. **未改変アプリ＋オーバーレイ翻訳**（`overlay/` 方式）：署名を壊さないため確実に動作します。
 
